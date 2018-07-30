@@ -57,4 +57,45 @@ begin
    exact prf.mp prf.pl1 (prf.nec H_d)
 end
 
+-- Maybe I can group up the following 'begin ... end' block and encapsulate it in a new tactic?
+
+def weak (p q : form) (Γ : ctx):
+  (Γ ⊢ₖ p) ⇒ (Γ ⸴ q ⊢ₖ p) :=
+begin
+  intro H,
+  induction H,
+    exact prf.pl1,
+    exact prf.pl2,
+    exact prf.pl3,
+    exact prf.mp H_ih_d₁ H_ih_d₂,
+    exact prf.k,
+    exact prf.nec H_d
+end
+
+def contr (p q : form) (Γ : ctx):
+  (Γ ⸴ p ⸴ p ⊢ₖ q) ⇒ (Γ ⸴ p ⊢ₖ q) :=
+begin
+  intro H,
+  induction H,
+    exact prf.pl1,
+    exact prf.pl2,
+    exact prf.pl3,
+    exact prf.mp H_ih_d₁ H_ih_d₂,
+    exact prf.k,
+    exact prf.nec H_d
+end
+
+def exg (p q r : form) (Γ : ctx):
+  (Γ ⸴ p ⸴ q ⊢ₖ r) ⇒ (Γ ⸴ q ⸴ p ⊢ₖ r) :=
+begin
+  intro H,
+  induction H,
+    exact prf.pl1,
+    exact prf.pl2,
+    exact prf.pl3,
+    exact prf.mp H_ih_d₁ H_ih_d₂,
+    exact prf.k,
+    exact prf.nec H_d
+end
+
 end mpl
