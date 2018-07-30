@@ -36,7 +36,7 @@ inductive prf : ctx → form → Type
 | pl3 {Γ : ctx} {p q : form} :  prf Γ (((~q) ⊃ ~p) ⊃ ((q ⊃ p) ⊃ p))
 | mp {Γ : ctx}  {p q : form} (d₁: prf Γ (p ⊃ q)) (d₂ : prf Γ p) : prf Γ q
 | k {Γ : ctx}  {p q : form} : prf Γ ((◻(p ⊃ q)) ⊃ (◻p ⊃ ◻q))
-| nec {p : form} (d : prf nil p) : prf nil (◻p)
+| nec {Γ : ctx} {p : form} (d : prf nil p) : prf Γ (◻p)
 
 axiom ax {Γ : ctx} {p : form} : prf (Γ ⸴ p) p
 
@@ -44,8 +44,8 @@ notation `·` := nil
 notation Γ `⊢ₖ` p := prf Γ p
 notation α `⇒` β := α → β 
 
-def deduction (p q : form) :
-  ({p} ⊢ₖ q) ⇒ (· ⊢ₖ p ⊃ q) :=
+def deduction {Γ : ctx} (p q : form) :
+  (Γ ⸴ p ⊢ₖ q) ⇒ (Γ ⊢ₖ p ⊃ q) :=
 begin
  intro H,
  induction H,
