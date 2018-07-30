@@ -5,12 +5,14 @@ Author: Bruno Bentzen
 -/
 
 namespace mpl
-open list nat
+open list nat bool
 
 /- language -/
 
+definition var : Type := nat
+
 inductive form : Type
-| var : nat → form
+| atom : var → form
 | neg : form → form
 | impl : form → form → form 
 | box : form → form
@@ -97,5 +99,25 @@ begin
     exact prf.k,
     exact prf.nec H_d
 end
+
+/- Kripke models -/
+
+definition wrld : Type := nat
+
+definition access : Type := wrld → wrld → bool
+
+definition val : Type := wrld → var → bool
+
+notation `𝓦` := wrld 
+notation `𝓡` := access
+notation `𝓿` := val 
+
+-- Still incomplete:
+
+def intrpr : form → (𝓦 × 𝓡 × 𝓿) → bool
+| (form.atom v) := λ M, nat.rec_on M.fst tt (λ w IH, band IH (M.snd.snd w v))
+| ~ p           := λ M, bnot (intrpr p M)
+| (p ⊃ q)       := λ M, bor (intrpr p M) (bnot (intrpr q M)) 
+| ◻ p          := λ M, nat.rec_on M.fst tt (λ w IH, _ )
 
 end mpl
