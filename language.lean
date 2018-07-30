@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2015 Bruno Bentzen. All rights reserved.
+Copyright (c) 2017 Bruno Bentzen. All rights reserved.
 Released under the Apache License 2.0 (see "License");
 Author: Bruno Bentzen
 -/
@@ -26,28 +26,35 @@ notation p `∨` q := ~ (~p & ~q)
 
 def ctx : Type := list form
 
-notation Γ `∪` p := cons p Γ
+notation Γ `⸴` p := cons p Γ
+notation Γ `∪` Ψ := append Γ Ψ
+notation `{` p `}` := [p]  
 
-inductive k.prf : ctx → form → Type 
-| ax {Γ : ctx} {p : form} : k.prf (Γ ∪ p) p
-| exg {Γ : ctx} {p q r: form} (d : k.prf (Γ ∪ p ∪ q) r) : k.prf (Γ ∪ q ∪ p) r
-| ni {Γ : ctx} {p : form} (d₁ : k.prf Γ p) (d₁ : k.prf Γ (p & ~p)):  k.prf Γ ~p
-| raa {Γ : ctx} {p : form} (d₁ : k.prf Γ ~p) (d₂ : k.prf Γ (p & ~p)) : k.prf Γ p
-| dt {Γ : ctx} {p q : form} (d : k.prf (Γ ∪ p) q) : k.prf Γ (p ⊃ q)
-| mp {Γ : ctx}  {p q : form} (d₁ : k.prf Γ p) (d₂: k.prf Γ (p ⊃ q)) : k.prf Γ q
-| k {Γ : ctx}  {p q : form} (d : k.prf Γ ◻(p ⊃ q)) : k.prf Γ (◻p ⊃ ◻q)
-| nec {p : form} (d : k.prf nil p) : k.prf nil (◻p)
+inductive prf : ctx → form → Type 
+| pl1 {Γ : ctx} {p q : form} : prf Γ (p ⊃ (q ⊃ p))
+| pl2 {Γ : ctx} {p q r : form} : prf Γ ((p ⊃ (q ⊃ r)) ⊃ ((p ⊃ q) ⊃ (p ⊃ r)))
+| pl3 {Γ : ctx} {p q : form} :  prf Γ (((~q) ⊃ ~p) ⊃ ((q ⊃ p) ⊃ p))
+| mp {Γ : ctx}  {p q : form} (d₁: prf Γ (p ⊃ q)) (d₂ : prf Γ p) : prf Γ q
+| k {Γ : ctx}  {p q : form} : prf Γ ((◻(p ⊃ q)) ⊃ (◻p ⊃ ◻q))
+| nec {p : form} (d : prf nil p) : prf nil (◻p)
 
-notation . := nil
-notation Γ `⊢ₖ` p := k.prf Γ p
-notation α `⇒` β := α → β
+axiom ax {Γ : ctx} {p : form} : prf (Γ ⸴ p) p
 
-example (p q : form) :
-  . ⊢ₖ p ⊃ (q ⊃ p) := 
-k.prf.dt (k.prf.dt (k.prf.exg k.prf.ax))
+notation `·` := nil
+notation Γ `⊢ₖ` p := prf Γ p
+notation α `⇒` β := α → β 
 
-example (p q : form) :
- . ⊢ₖ ◻ p ⊃ ◻ (q ⊃ p) := 
-k.prf.k (k.prf.nec (k.prf.dt (k.prf.dt (k.prf.exg k.prf.ax))))
+def deduction (p q : form) :
+  ({p} ⊢ₖ q) ⇒ (· ⊢ₖ p ⊃ q) :=
+begin
+ intro H,
+ induction H,
+   exact prf.mp prf.pl1 prf.pl1,
+   exact prf.mp prf.pl1 (prf.pl2),
+   exact prf.mp prf.pl1 (prf.pl3),
+   exact prf.mp (prf.mp prf.pl2 H_ih_d₁) H_ih_d₂,
+   exact prf.mp prf.pl1 prf.k,
+   exact prf.mp prf.pl1 (prf.nec H_d)
+end
 
 end mpl
