@@ -102,22 +102,66 @@ end
 
 /- Kripke models -/
 
-definition wrld : Type := nat
+definition frame : Type := ((list nat) × (nat → nat → bool))
 
-definition access : Type := wrld → wrld → bool
+definition k_model : Type := frame × (nat → var → bool)
 
-definition val : Type := wrld → var → bool
+notation `𝓦` `⸴` `𝓡` `⸴` `𝓿` := k_model
 
-notation `𝓦` := wrld 
-notation `𝓡` := access
-notation `𝓿` := val 
+-- My first tentative attempt:
 
--- Still incomplete:
+def vldty (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) : form → bool
+| # v     := list.rec tt (λ w _ f, band f (M.snd w v)) M.fst.fst
+| ~ p     := bnot (vldty p)
+| (p ⊃ q) := bor (bnot (vldty p)) (vldty q) 
+| ◻ p    :=           -- the following is wrong, there is no mention of p!
+  list.rec tt (λ w t1 f1, band f1 
+    (list.rec ff (λ v t2 f2, 
+      (cond (M.fst.snd w v) tt (band f2 (M.snd w v))) ) 
+    t1  )) M.fst.fst
 
-def intrpr : form → (𝓦 × 𝓡 × 𝓿) → bool
-| (form.atom v) := λ M, nat.rec_on M.fst tt (λ w IH, band IH (M.snd.snd w v))
-| ~ p           := λ M, bnot (intrpr p M)
-| (p ⊃ q)       := λ M, bor (intrpr p M) (bnot (intrpr q M)) 
-| ◻ p          := λ M, nat.rec_on M.fst tt (λ w IH, _ )
+notation M `〚 ` p `〛` := vldty M p 
+
+inductive stsf (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (p : form) : Type 
+| is_true (m : M〚p〛 = tt) : stsf
+
+notation M `⊨ₖ` p := stsf M p
+
+definition sndnss (p : form) (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) :
+( · ⊢ₖ p) ⇒ (M ⊨ₖ p) :=
+begin
+  intro H,
+  induction H,
+    repeat {
+      apply stsf.is_true,
+      unfold vldty,
+      induction (vldty M H_p), 
+        induction (vldty M H_q),
+          simp, simp,
+          induction (vldty M H_q),
+            simp, simp
+    },
+          induction (vldty M H_r),
+            apply or.intro_left, simp,
+            apply or.intro_right, simp,
+    apply stsf.is_true,
+    induction H_ih_d₁, 
+      induction H_ih_d₂,
+        revert H_ih_d₁ H_ih_d₂,
+        unfold vldty,
+        induction (vldty M H_p),
+          induction (vldty M H_q),
+            simp, simp,
+          induction (vldty M H_q),
+            simp, simp,
+    apply stsf.is_true,
+    unfold vldty,
+  --  induction M with frame val,
+    --  induction frame with W R,
+      --  induction W with w t IH, 
+        --  simp,
+
+end
+
 
 end mpl
