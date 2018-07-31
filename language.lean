@@ -35,7 +35,7 @@ notation `{` p `}` := [p]
 inductive prf : ctx → form → Type 
 | pl1 {Γ : ctx} {p q : form} : prf Γ (p ⊃ (q ⊃ p))
 | pl2 {Γ : ctx} {p q r : form} : prf Γ ((p ⊃ (q ⊃ r)) ⊃ ((p ⊃ q) ⊃ (p ⊃ r)))
-| pl3 {Γ : ctx} {p q : form} :  prf Γ (((~q) ⊃ ~p) ⊃ ((q ⊃ p) ⊃ p))
+| pl3 {Γ : ctx} {p q : form} :  prf Γ (((~p) ⊃ ~q) ⊃ ((~p ⊃ q) ⊃ p))
 | mp {Γ : ctx}  {p q : form} (d₁: prf Γ (p ⊃ q)) (d₂ : prf Γ p) : prf Γ q
 | k {Γ : ctx}  {p q : form} : prf Γ ((◻(p ⊃ q)) ⊃ (◻p ⊃ ◻q))
 | nec {Γ : ctx} {p : form} (d : prf nil p) : prf Γ (◻p)
