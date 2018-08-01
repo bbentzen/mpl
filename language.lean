@@ -153,7 +153,16 @@ begin
                 ... = M⦃H_q⦄w  : ff_bor _
             ),
     apply stsf.is_true,
-    sorry,  -- proof that K is valid goes here.
+      unfold true_in_wrld,      
+      intro w,
+      induction M.fst.fst with k IH,
+        simp, simp,
+        cases (bor_to_or IH),
+          apply or.intro_left,
+            apply or.intro_left,
+              exact h,
+          apply or.intro_right,
+            sorry, -- to be continued
     apply stsf.is_true,
       intros w, 
       unfold true_in_wrld,
