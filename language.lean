@@ -108,22 +108,17 @@ definition k_model : Type := frame × (nat → var → bool)
 
 notation `𝓦` `⸴` `𝓡` `⸴` `𝓿` := k_model
 
--- My first tentative attempt:
+def true_in_wrld (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) : form → nat → bool
+| # p     := λ w, M.snd w p
+| ~ p     := λ w, bnot (true_in_wrld p w)
+| (p ⊃ q) := λ w, bor (bnot (true_in_wrld p w)) (true_in_wrld q w) 
+| ◻ p    := 
+  λ w, list.rec_on M.fst.fst tt (λ v t f, band f (cond (M.fst.snd w v) tt  (true_in_wrld p v)) )
 
-def vldty (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) : form → bool
-| # v     := list.rec tt (λ w _ f, band f (M.snd w v)) M.fst.fst
-| ~ p     := bnot (vldty p)
-| (p ⊃ q) := bor (bnot (vldty p)) (vldty q) 
-| ◻ p    :=           -- the following is wrong, there is no mention of p!
-  list.rec tt (λ w t1 f1, band f1 
-    (list.rec ff (λ v t2 f2, 
-      (cond (M.fst.snd w v) tt (band f2 (M.snd w v))) ) 
-    t1  )) M.fst.fst
-
-notation M `〚 ` p `〛` := vldty M p 
+notation M `⦃`p`⦄` w := true_in_wrld M p w
 
 inductive stsf (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (p : form) : Type 
-| is_true (m : M〚p〛 = tt) : stsf
+| is_true (m : Π (w : nat), (is_in_wrld w M.fst.fst) → ( (M ⦃p⦄ w) = tt) ) : stsf
 
 notation M `⊨ₖ` p := stsf M p
 
@@ -134,34 +129,37 @@ begin
   induction H,
     repeat {
       apply stsf.is_true,
-      unfold vldty,
-      induction (vldty M H_p), 
-        induction (vldty M H_q),
-          simp, simp,
-          induction (vldty M H_q),
+        intros w is_at_w,
+        unfold true_in_wrld,
+        induction (true_in_wrld M H_p w), 
+          induction (true_in_wrld M H_q w),
+            simp, simp,
+          induction (true_in_wrld M H_q w),
             simp, simp
     },
-          induction (vldty M H_r),
-            apply or.intro_left, simp,
-            apply or.intro_right, simp,
+          induction (true_in_wrld M H_r w),
+            simp, simp,
+    
     apply stsf.is_true,
     induction H_ih_d₁, 
       induction H_ih_d₂,
-        revert H_ih_d₁ H_ih_d₂,
-        unfold vldty,
-        induction (vldty M H_p),
-          induction (vldty M H_q),
-            simp, simp,
-          induction (vldty M H_q),
-            simp, simp,
+        intros w is_in_ws,
+        apply eq.symm,
+        exact (
+          calc 
+            tt  = M⦃H_p ⊃ H_q⦄w  : eq.symm (H_ih_d₁ w is_in_ws)
+            ... = bnot (M⦃H_p⦄w)  || M⦃H_q⦄w  : rfl
+            ... = ff  || M⦃H_q⦄w  : eq.substr (H_ih_d₂ w is_in_ws) rfl
+            ... = M⦃H_q⦄w  : ff_bor _
+          ),
     apply stsf.is_true,
-    unfold vldty,
-  --  induction M with frame val,
-    --  induction frame with W R,
-      --  induction W with w t IH, 
-        --  simp,
+      intros w is_in_ws,
+      unfold true_in_wrld,
+      simp,
+    
+        
+  -- to be continued.
 
 end
-
 
 end mpl
