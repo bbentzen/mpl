@@ -118,7 +118,7 @@ def true_in_wrld (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) : form → nat → bool
 notation M `⦃`p`⦄` w := true_in_wrld M p w
 
 inductive stsf (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (p : form) : Type 
-| is_true (m : Π (w : nat), (is_in_wrld w M.fst.fst) → ( (M ⦃p⦄ w) = tt) ) : stsf
+| is_true (m : Π (w : nat),  (M ⦃p⦄ w) = tt ) : stsf
 
 notation M `⊨ₖ` p := stsf M p
 
@@ -129,7 +129,7 @@ begin
   induction H,
     repeat {
       apply stsf.is_true,
-        intros w is_at_w,
+        intros w,
         unfold true_in_wrld,
         induction (true_in_wrld M H_p w), 
           induction (true_in_wrld M H_q w),
@@ -141,25 +141,30 @@ begin
             simp, simp,
     
     apply stsf.is_true,
-    induction H_ih_d₁, 
-      induction H_ih_d₂,
-        intros w is_in_ws,
-        apply eq.symm,
-        exact (
-          calc 
-            tt  = M⦃H_p ⊃ H_q⦄w  : eq.symm (H_ih_d₁ w is_in_ws)
-            ... = bnot (M⦃H_p⦄w)  || M⦃H_q⦄w  : rfl
-            ... = ff  || M⦃H_q⦄w  : eq.substr (H_ih_d₂ w is_in_ws) rfl
-            ... = M⦃H_q⦄w  : ff_bor _
-          ),
+      induction H_ih_d₁, 
+        induction H_ih_d₂,
+          intros w,
+          apply eq.symm,
+            exact (
+              calc 
+                tt  = M⦃H_p ⊃ H_q⦄w  : eq.symm (H_ih_d₁ w)
+                ... = bnot (M⦃H_p⦄w)  || M⦃H_q⦄w  : rfl
+                ... = ff  || M⦃H_q⦄w  : eq.substr (H_ih_d₂ w) rfl
+                ... = M⦃H_q⦄w  : ff_bor _
+            ),
     apply stsf.is_true,
-      intros w is_in_ws,
+    sorry,  -- proof that K is valid goes here.
+    apply stsf.is_true,
+      intros w, 
       unfold true_in_wrld,
-      simp,
-    
-        
-  -- to be continued.
-
+      induction H_ih,
+        induction M.fst.fst with k IH,
+          simp, simp,
+          apply and.intro,
+            exact IH,
+            induction ((M.fst).snd w k), 
+              simp, simp,
+              exact (H_ih k)
 end
 
 end mpl
