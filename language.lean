@@ -178,7 +178,7 @@ begin
               exact (H_ih k)
 end
 
-def nec_false (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) (w : nat) (p : form) : 
+def nec_false_exist_wrld_false (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) (w : nat) (p : form) : 
   ((M⦃◻p⦄w) = ff) ⇒ (∃ v, ((M.fst.snd w v) = tt) ∧ ((M⦃p⦄v) = ff)) := 
 begin
   unfold true_in_wrld,
@@ -188,6 +188,20 @@ begin
     cases H with H1 H2,
      exact (IH H1),
      exact ⟨v, H2⟩ 
+end
+
+def all_wrlds_true_nec_true (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) (w : nat) (p : form) : 
+(∀ v, ((M.fst.snd w v = tt) → (M⦃p⦄v) = tt)) ⇒ ((M⦃◻p⦄w) = tt)  := 
+begin
+  intro f,
+  apply eq_tt_of_not_eq_ff,
+  apply 
+    (show ¬ (∃ v, (_ = tt) ∧ (_ = ff)) ⇒ ¬ (_ = ff) , 
+      from λ f a, f ((nec_false M w p) a) ),
+    intro g, 
+    cases g with v h,
+      cases h with h1 h2,
+        exact (bool.no_confusion (eq.trans (eq.symm (f v h1)) h2))
 end
 
 end mpl
