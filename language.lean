@@ -102,9 +102,9 @@ end
 
 /- Kripke models -/
 
-definition frame : Type := ((list nat) × (nat → nat → bool))
+def frame : Type := ((list nat) × (nat → nat → bool))
 
-definition k_model : Type := frame × (nat → var → bool)
+def k_model : Type := frame × (nat → var → bool)
 
 notation `𝓦` `⸴` `𝓡` `⸴` `𝓿` := k_model
 
@@ -118,12 +118,77 @@ def true_in_wrld (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) : form → nat → bool
 
 notation M `⦃`p`⦄` w := true_in_wrld M p w
 
+def nec_ff_exists_wrld_ff (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) (w : nat) (p : form) : 
+  ((M⦃◻p⦄w) = ff) ⇒ (∃ v, ((M.fst.snd w v) = tt) ∧ ((M⦃p⦄v) = ff)) := 
+begin
+  unfold true_in_wrld,
+  induction M.fst.fst with v IH,
+    simp, simp,
+    intro H,
+    cases H with H1 H2,
+     exact (IH H1),
+     exact ⟨v, H2⟩ 
+end
+
+def all_wrlds_tt_nec_tt (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) (w : nat) (p : form) : 
+(∀ v, ((M.fst.snd w v = tt) → (M⦃p⦄v) = tt)) ⇒ ((M⦃◻p⦄w) = tt)  := 
+begin
+  intro f,
+  apply eq_tt_of_not_eq_ff,
+  apply 
+    (show ¬ (∃ v, (_ = tt) ∧ (_ = ff)) ⇒ ¬ (_ = ff) , 
+      from λ f a, f ((nec_ff_exists_wrld_ff M w p) a) ),
+    intro g, 
+    cases g with v h,
+      cases h with h1 h2,
+        exact (bool.no_confusion (eq.trans (eq.symm (f v h1)) h2))
+end
+
+
+def nec_impl_to_nec_nec (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (w : nat) (p q : form) : 
+  ((M⦃◻(p ⊃ q)⦄w) = tt) → (M⦃◻p⦄w) = tt → (M⦃◻q⦄w) = tt := 
+begin
+  unfold true_in_wrld,
+  induction M.fst.fst with k IH,
+    simp, simp at *,
+      intros Hpq Hp,
+        cases Hpq with Hpq1 Hpq2,
+          cases Hp with Hp1 Hp2,
+            apply and.intro,
+              exact (IH Hpq1 Hp1),
+              cases Hpq2,
+                apply or.intro_left,
+                  assumption, 
+                cases Hp2,
+                  apply or.intro_left,
+                    assumption,
+                  cases Hpq2,
+                    exact (bool.no_confusion (eq.trans (eq.symm Hp2) Hpq2)),
+                    apply or.intro_right,
+                      assumption
+end
+
+def nec_impl_ff_exist_wlrd_ff (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (w : nat) (p q : form) : 
+  ((M⦃◻(p ⊃ q)⦄ w) = ff) ⇒ (∃ k : nat, ((M⦃p⦄k) = tt) ∧ ((M⦃q⦄k) = ff)) := 
+begin
+  unfold true_in_wrld,
+  induction M.fst.fst with k IH,
+    simp, simp,
+    intro H,
+    cases H with H1 H2,
+      exact (IH H1),
+      cases H2,
+      exact ⟨k, H2_right⟩
+end
+
+/- Soundness -/
+
 inductive stsf (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (p : form) : Type 
 | is_true (m : Π (w : nat),  (M ⦃p⦄ w) = tt ) : stsf
 
 notation M `⊨ₖ` p := stsf M p
 
-definition sndnss (p : form) (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) :
+def sndnss (p : form) (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) :
 ( · ⊢ₖ p) ⇒ (M ⊨ₖ p) :=
 begin
   intro H,
@@ -176,32 +241,6 @@ begin
             induction ((M.fst).snd w k), 
               simp, simp,
               exact (H_ih k)
-end
-
-def nec_false_exist_wrld_false (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) (w : nat) (p : form) : 
-  ((M⦃◻p⦄w) = ff) ⇒ (∃ v, ((M.fst.snd w v) = tt) ∧ ((M⦃p⦄v) = ff)) := 
-begin
-  unfold true_in_wrld,
-  induction M.fst.fst with v IH,
-    simp, simp,
-    intro H,
-    cases H with H1 H2,
-     exact (IH H1),
-     exact ⟨v, H2⟩ 
-end
-
-def all_wrlds_true_nec_true (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) (w : nat) (p : form) : 
-(∀ v, ((M.fst.snd w v = tt) → (M⦃p⦄v) = tt)) ⇒ ((M⦃◻p⦄w) = tt)  := 
-begin
-  intro f,
-  apply eq_tt_of_not_eq_ff,
-  apply 
-    (show ¬ (∃ v, (_ = tt) ∧ (_ = ff)) ⇒ ¬ (_ = ff) , 
-      from λ f a, f ((nec_false M w p) a) ),
-    intro g, 
-    cases g with v h,
-      cases h with h1 h2,
-        exact (bool.no_confusion (eq.trans (eq.symm (f v h1)) h2))
 end
 
 end mpl
