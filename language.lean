@@ -109,11 +109,12 @@ definition k_model : Type := frame × (nat → var → bool)
 notation `𝓦` `⸴` `𝓡` `⸴` `𝓿` := k_model
 
 def true_in_wrld (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) : form → nat → bool
-| # p     := λ w, M.snd w p
+| # p     := λ w, M.snd w p --nat.rec_on (M.fst.fst) tt (λ _ _, M.snd w p)
 | ~ p     := λ w, bnot (true_in_wrld p w)
-| (p ⊃ q) := λ w, bor (bnot (true_in_wrld p w)) (true_in_wrld q w) 
-| ◻ p    := 
-  λ w, list.rec_on M.fst.fst tt (λ v t f, band f (cond (M.fst.snd w v) tt  (true_in_wrld p v)) )
+| (p ⊃ q) := λ w, (bnot (true_in_wrld p w)) || (true_in_wrld q w) 
+| ◻ p    := λ w, 
+    nat.rec_on M.fst.fst tt 
+    (λ v IH, IH && ((bnot (M.fst.snd w v)) || (true_in_wrld p v)))
 
 notation M `⦃`p`⦄` w := true_in_wrld M p w
 
@@ -155,16 +156,17 @@ begin
     apply stsf.is_true,
       unfold true_in_wrld,      
       intro w,
-      induction M.fst.fst with k IH,
-        simp, simp,
-        cases (bor_to_or IH),
-          apply or.intro_left,
-            apply or.intro_left,
-              exact h,
-          apply or.intro_right,
-            sorry, -- to be continued
+          induction M.fst.fst with k IH,
+            simp, simp at *,
+            cases IH,
+              apply or.intro_left,
+                  apply or.intro_left,
+                    assumption,                    
+                  apply or.intro_right,
+                  sorry, -- proof of K goes here
+
     apply stsf.is_true,
-      intros w, 
+      intro w, 
       unfold true_in_wrld,
       induction H_ih,
         induction M.fst.fst with k IH,
@@ -174,6 +176,18 @@ begin
             induction ((M.fst).snd w k), 
               simp, simp,
               exact (H_ih k)
+end
+
+def nec_false (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) (w : nat) (p : form) : 
+  ((M⦃◻p⦄w) = ff) ⇒ (∃ v, ((M.fst.snd w v) = tt) ∧ ((M⦃p⦄v) = ff)) := 
+begin
+  unfold true_in_wrld,
+  induction M.fst.fst with v IH,
+    simp, simp,
+    intro H,
+    cases H with H1 H2,
+     exact (IH H1),
+     exact ⟨v, H2⟩ 
 end
 
 end mpl
