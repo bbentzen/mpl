@@ -117,7 +117,6 @@ def true_in_wrld (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) : form → nat → bool
     (λ v IH, IH && ((bnot (M.fst.snd w v)) || (true_in_wrld p v)))
 
 notation M `⦃`p`⦄` w := true_in_wrld M p w
-
 def nec_ff_exists_wrld_ff (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) (w : nat) (p : form) : 
   ((M⦃◻p⦄w) = ff) ⇒ (∃ v, ((M.fst.snd w v) = tt) ∧ ((M⦃p⦄v) = ff)) := 
 begin
@@ -168,7 +167,7 @@ begin
                       assumption
 end
 
-def nec_impl_ff_exist_wlrd_ff (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (w : nat) (p q : form) : 
+definition nec_impl_ff_exist_wlrd_ff (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (w : nat) (p q : form) : 
   ((M⦃◻(p ⊃ q)⦄ w) = ff) ⇒ (∃ k : nat, ((M⦃p⦄k) = tt) ∧ ((M⦃q⦄k) = ff)) := 
 begin
   unfold true_in_wrld,
@@ -181,14 +180,84 @@ begin
       exact ⟨k, H2_right⟩
 end
 
-/- Soundness -/
+def nec_nec_to_nec_impl_nec (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (w : nat) (p q : form) : 
+  ((M⦃◻p⦄w) = tt) → ((M⦃◻q⦄w) = tt) → ((M⦃(◻p) ⊃ (◻q)⦄w) = tt) := 
+begin
+  unfold true_in_wrld,
+  induction M.fst.fst with v IH,
+    intros H1 H2,
+    simp, simp,
+    intros H1 H2,
+    apply or.intro_right,
+      assumption
+end
+
+
+def impl_tt_to_impl (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (w : nat) (p q : form) : 
+   ((M⦃p⦄w) = tt → (M⦃q⦄w) = tt) → ((M⦃p ⊃ q⦄w) = tt) := 
+begin
+  unfold true_in_wrld,  
+  induction (true_in_wrld M p w),
+  repeat {
+    induction (true_in_wrld M q w),
+    simp, simp,
+  }
+end
+
+def tt_tt_to_impl (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (w : nat) (p q : form) : 
+   ((M⦃p⦄w) = tt) → ((M⦃q⦄w) = tt) → ((M⦃p ⊃ q⦄w) = tt) := 
+begin
+  unfold true_in_wrld,  
+  induction (true_in_wrld M p w),
+  repeat {
+    induction (true_in_wrld M q w),
+    simp, simp,
+  }
+end
+
+def nec_impl_to_nec_impl_nec (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (w : nat) (p q : form) : 
+  ((M⦃◻(p ⊃ q)⦄w) = tt) → ((M⦃◻p⦄w) = tt → (M⦃◻q⦄w) = tt) := 
+begin
+  unfold true_in_wrld,
+  induction M.fst.fst with k IH,
+    simp, simp,
+    intros H1 H2,
+      cases H1,
+        cases H2,
+          apply and.intro,
+            exact (IH H1_left H2_left),
+            cases H1_right,
+              apply or.intro_left,
+                assumption,
+                cases H1_right,
+                  cases H2_right,
+                    apply or.intro_left,
+                      assumption,
+                      exact (bool.no_confusion (eq.trans (eq.symm H2_right) H1_right)),
+                    apply or.intro_right,
+                      assumption
+end
+
+definition K_is_valid (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (w : nat) (p q : form) : 
+  ((M⦃(◻(p ⊃ q)) ⊃ ((◻p) ⊃ (◻q))⦄ w) = tt) := 
+begin
+  apply impl_tt_to_impl,
+    intro H,
+    apply impl_tt_to_impl,
+    apply nec_impl_to_nec_impl_nec,
+      assumption
+end 
+
+/- (Weak) Soundness -/
 
 inductive stsf (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (p : form) : Type 
 | is_true (m : Π (w : nat),  (M ⦃p⦄ w) = tt ) : stsf
 
 notation M `⊨ₖ` p := stsf M p
 
-def sndnss (p : form) (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) :
+--set_option pp.notation false
+
+definition sndnss (p : form) (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) :
 ( · ⊢ₖ p) ⇒ (M ⊨ₖ p) :=
 begin
   intro H,
@@ -219,17 +288,12 @@ begin
                 ... = M⦃H_q⦄w  : ff_bor _
             ),
     apply stsf.is_true,
-      unfold true_in_wrld,      
       intro w,
-          induction M.fst.fst with k IH,
-            simp, simp at *,
-            cases IH,
-              apply or.intro_left,
-                  apply or.intro_left,
-                    assumption,                    
-                  apply or.intro_right,
-                  sorry, -- proof of K goes here
-
+      apply impl_tt_to_impl,
+        intro H,
+        apply impl_tt_to_impl,
+          apply nec_impl_to_nec_impl_nec,
+            assumption,
     apply stsf.is_true,
       intro w, 
       unfold true_in_wrld,
