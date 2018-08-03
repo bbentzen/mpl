@@ -102,9 +102,9 @@ end
 
 /- Kripke models -/
 
-def frame : Type := ((list nat) × (nat → nat → bool))
+definition frame : Type := (nat × (nat → nat → bool))
 
-def k_model : Type := frame × (nat → var → bool)
+definition k_model : Type := frame × (nat → var → bool)
 
 notation `𝓦` `⸴` `𝓡` `⸴` `𝓿` := k_model
 
@@ -117,6 +117,7 @@ def true_in_wrld (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) : form → nat → bool
     (λ v IH, IH && ((bnot (M.fst.snd w v)) || (true_in_wrld p v)))
 
 notation M `⦃`p`⦄` w := true_in_wrld M p w
+
 def nec_ff_exists_wrld_ff (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) (w : nat) (p : form) : 
   ((M⦃◻p⦄w) = ff) ⇒ (∃ v, ((M.fst.snd w v) = tt) ∧ ((M⦃p⦄v) = ff)) := 
 begin
@@ -142,7 +143,6 @@ begin
       cases h with h1 h2,
         exact (bool.no_confusion (eq.trans (eq.symm (f v h1)) h2))
 end
-
 
 def nec_impl_to_nec_nec (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (w : nat) (p q : form) : 
   ((M⦃◻(p ⊃ q)⦄w) = tt) → (M⦃◻p⦄w) = tt → (M⦃◻q⦄w) = tt := 
@@ -192,7 +192,6 @@ begin
       assumption
 end
 
-
 def impl_tt_to_impl (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (w : nat) (p q : form) : 
    ((M⦃p⦄w) = tt → (M⦃q⦄w) = tt) → ((M⦃p ⊃ q⦄w) = tt) := 
 begin
@@ -236,28 +235,16 @@ begin
                       exact (bool.no_confusion (eq.trans (eq.symm H2_right) H1_right)),
                     apply or.intro_right,
                       assumption
-end
-
-definition K_is_valid (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (w : nat) (p q : form) : 
-  ((M⦃(◻(p ⊃ q)) ⊃ ((◻p) ⊃ (◻q))⦄ w) = tt) := 
-begin
-  apply impl_tt_to_impl,
-    intro H,
-    apply impl_tt_to_impl,
-    apply nec_impl_to_nec_impl_nec,
-      assumption
 end 
 
-/- (Weak) Soundness -/
+/- Soundness -/
 
 inductive stsf (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (p : form) : Type 
 | is_true (m : Π (w : nat),  (M ⦃p⦄ w) = tt ) : stsf
 
 notation M `⊨ₖ` p := stsf M p
 
---set_option pp.notation false
-
-definition sndnss (p : form) (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) :
+definition wk_sndnss (p : form) (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) :
 ( · ⊢ₖ p) ⇒ (M ⊨ₖ p) :=
 begin
   intro H,
@@ -305,6 +292,71 @@ begin
             induction ((M.fst).snd w k), 
               simp, simp,
               exact (H_ih k)
+end
+
+/- Soundness -/
+
+def ctx.true_in_wrld (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) : ctx → nat → bool
+| ·      := λ w, tt
+| (Γ ⸴ p) := λ w, ctx.true_in_wrld Γ w && M⦃p⦄w
+
+notation M `⦃`p`⦄` w := ctx.true_in_wrld M p w
+
+inductive sem_csq (Γ : ctx) (p : form) : Type 
+| is_true (m : Π (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) (w : nat), (M ⦃Γ⦄ w) = tt → (M ⦃p⦄ w) = tt ) : sem_csq
+
+notation Γ `⊨ₖ` p := sem_csq Γ p
+
+definition sndnss (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) (Γ : ctx) (p q : form)  :
+  (Γ ⊢ₖ p) ⇒ (Γ ⊨ₖ p) :=
+begin
+  intro H,
+  induction H,
+    repeat {
+      apply sem_csq.is_true,
+        intros M w csq,
+        unfold true_in_wrld ctx.true_in_wrld,
+        induction (true_in_wrld M H_p w), 
+          induction (true_in_wrld M H_q w),
+            simp, simp,
+          induction (true_in_wrld M H_q w),
+            simp, simp
+    },
+          induction (true_in_wrld M H_r w),
+            simp, simp,
+        
+      apply sem_csq.is_true,
+      induction H_ih_d₁, 
+        induction H_ih_d₂,
+        intros M w csq,
+          apply eq.symm,
+            exact (
+              calc 
+                tt  = M⦃H_p ⊃ H_q⦄w  : eq.symm (H_ih_d₁ M w csq)
+                ... = bnot (M⦃H_p⦄w)  || M⦃H_q⦄w  : rfl
+                ... = ff  || M⦃H_q⦄w  : eq.substr (H_ih_d₂ M w csq) rfl
+                ... = M⦃H_q⦄w  : ff_bor _
+            ),
+
+      apply sem_csq.is_true,
+        intros M w csq,
+        apply impl_tt_to_impl,
+          intro H,
+          apply impl_tt_to_impl,
+            apply nec_impl_to_nec_impl_nec,
+              assumption,
+
+      apply sem_csq.is_true,
+        intros M w csq,
+        unfold true_in_wrld ctx.true_in_wrld,
+      induction H_ih,
+        induction M.fst.fst with k IH,
+          simp, simp,
+          apply and.intro,
+            exact IH,
+            induction ((M.fst).snd w k), 
+              simp, simp,
+              exact (H_ih M k rfl)
 end
 
 end mpl
