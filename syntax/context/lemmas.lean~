@@ -1,0 +1,603 @@
+/-
+Copyright (c) 2017 Bruno Bentzen. All rights reserved.
+Released under the Apache License 2.0 (see "License");
+Author: Bruno Bentzen
+-/
+
+namespace mpl
+
+open list nat bool
+
+/- language -/
+
+inductive form : Type
+| atom : nat → form
+| neg : form → form
+| impl : form → form → form 
+| box : form → form
+
+notation `#` v := form.atom v
+notation `~` p := form.neg p
+notation p `⊃` q := form.impl p q
+notation `◻` p := form.box p
+notation `◇` p := ~ ◻ ~ p
+notation p `&` q := ~ (p ⊃ ~q)
+notation p `∨` q := ~ (~p & ~q)
+
+/- Contexts -/ 
+
+open tactic
+
+def ctx : Type := list form
+
+notation `·` := nil
+notation Γ `⸴` p := cons p Γ
+notation Γ `∪` Ψ := append Γ Ψ
+notation `{` p `}` := [p]  
+
+variable (H : nil = 1::nil)
+
+-------------------------------------------
+
+#check @form.no_confusion
+#check @list.no_confusion_type
+
+def dec_eq_nat : decidable_eq nat :=
+by mk_dec_eq_instance
+
+definition code (α : form) : form → Prop
+ | (#v) := false
+ | (~p) := false
+ | (p ⊃ q) := false
+ | (◻p) := (α = p)
+
+definition decode (α x : form) : code α x → (◻α) = x :=
+begin
+  induction x,
+    repeat{
+      unfold code,
+      intro h,
+      contradiction
+    },
+    unfold code, intro h,
+    induction h,
+    exact rfl
+end
+
+definition encode (α x : form) : (◻α) = x → code α x :=
+begin
+  intro h,
+  induction h, unfold code
+end
+
+
+
+def dec_eq_form : Π (p q : form), (p = q) ∨ (¬ (p = q))
+| (#v) (#w) := sorry --begin cases dec_eq_nat end
+| (#v) (~q) := begin apply or.intro_right, exact (λ H, form.no_confusion H) end
+| (#v) (q₁ ⊃ q₂) := begin apply or.intro_right, exact (λ H, form.no_confusion H) end
+| (#v) (◻q) := begin apply or.intro_right, exact (λ H, form.no_confusion H) end
+| (~p) (#w) := begin apply or.intro_right, exact (λ H, form.no_confusion H) end
+| (~p) (~q) := sorry
+| (~p) (q₁ ⊃ q₂) := sorry
+| (~p) (◻q) := sorry
+| (p₁ ⊃ p₂) (#w) := sorry
+| (p₁ ⊃ p₂) (~q) := sorry
+| (p₁ ⊃ p₂) (q₁ ⊃ q₂) := sorry
+| (p₁ ⊃ p₂) (◻q) := sorry
+| (◻p) (#w) := begin apply or.intro_right, exact (λ H, form.no_confusion H) end
+| (◻p) (~q) := sorry
+| (◻p) (q₁ ⊃ q₂) := sorry
+| (◻p) (◻q) := begin cases (dec_eq_form p q), apply or.intro_left, induction h, exact rfl, 
+   apply or.intro_right, intro H, end --exact (absurd h_1 h) end
+
+#check @eq.subst
+
+def dec_eq_ctx : Π {Γ Ψ : ctx}, (Γ = Ψ) ∨ (¬ (Γ = Ψ))
+| ·   · := by apply or.intro_left; exact rfl
+| · (Ψ ⸴ q) := begin apply or.intro_right, exact (λ H, list.no_confusion H) end
+| (Γ ⸴ p) · := begin apply or.intro_right, exact (λ H, list.no_confusion H) end
+| (Γ ⸴ p) (Ψ ⸴ q) := sorry
+
+definition is_in_ctx (w : nat) : ctx → Type
+| nil := empty
+| (v::t) :=
+  begin cases dec_eq_form end
+
+
+/- the K system -/
+
+inductive prf : ctx → form → Type 
+| pl1 {Γ : ctx} {p q : form} : prf Γ (p ⊃ (q ⊃ p))
+| pl2 {Γ : ctx} {p q r : form} : prf Γ ((p ⊃ (q ⊃ r)) ⊃ ((p ⊃ q) ⊃ (p ⊃ r)))
+| pl3 {Γ : ctx} {p q : form} :  prf Γ (((~p) ⊃ ~q) ⊃ ((~p ⊃ q) ⊃ p))
+| mp {Γ : ctx}  {p q : form} (d₁: prf Γ (p ⊃ q)) (d₂ : prf Γ p) : prf Γ q
+| k {Γ : ctx}  {p q : form} : prf Γ ((◻(p ⊃ q)) ⊃ ((◻p) ⊃ (◻q)))
+| nec {Γ : ctx} {p : form} (d : prf nil p) : prf Γ (◻p)
+
+axiom ax {Γ : ctx} {p : form} : prf (Γ ⸴ p) p
+
+notation Γ `⊢ₖ` p := prf Γ p
+notation α `⇒` β := α → β 
+
+def deduction {Γ : ctx} (p q : form) :
+  (Γ ⸴ p ⊢ₖ q) ⇒ (Γ ⊢ₖ p ⊃ q) :=
+begin
+ intro H,
+ induction H,
+   exact prf.mp prf.pl1 prf.pl1,
+   exact prf.mp prf.pl1 (prf.pl2),
+   exact prf.mp prf.pl1 (prf.pl3),
+   exact prf.mp (prf.mp prf.pl2 H_ih_d₁) H_ih_d₂,
+   exact prf.mp prf.pl1 prf.k,
+   exact prf.mp prf.pl1 (prf.nec H_d)
+end
+
+def weak (p q : form) (Γ : ctx):
+  (Γ ⊢ₖ p) ⇒ (Γ ⸴ q ⊢ₖ p) :=
+begin
+  intro H,
+  induction H,
+    exact prf.pl1,
+    exact prf.pl2,
+    exact prf.pl3,
+    exact prf.mp H_ih_d₁ H_ih_d₂,
+    exact prf.k,
+    exact prf.nec H_d
+end
+
+def contr (p q : form) (Γ : ctx):
+  (Γ ⸴ p ⸴ p ⊢ₖ q) ⇒ (Γ ⸴ p ⊢ₖ q) :=
+begin
+  intro H,
+  induction H,
+    exact prf.pl1,
+    exact prf.pl2,
+    exact prf.pl3,
+    exact prf.mp H_ih_d₁ H_ih_d₂,
+    exact prf.k,
+    exact prf.nec H_d
+end
+
+def exg (p q r : form) (Γ : ctx):
+  (Γ ⸴ p ⸴ q ⊢ₖ r) ⇒ (Γ ⸴ q ⸴ p ⊢ₖ r) :=
+begin
+  intro H,
+  induction H,
+    exact prf.pl1,
+    exact prf.pl2,
+    exact prf.pl3,
+    exact prf.mp H_ih_d₁ H_ih_d₂,
+    exact prf.k,
+    exact prf.nec H_d
+end
+
+/- Kripke models -/
+
+-- W wrld is a n ∈ nat s.t. w ∈ wrld iff w ≤ wrld
+
+definition frame : Type := (nat × (nat → nat → bool))
+
+definition k_model : Type := frame × (nat → nat → bool)
+
+notation `𝓦` `⸴` `𝓡` `⸴` `𝓿` := k_model
+
+def true_in_wrld (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) : form → nat → bool
+| # p     := λ w, M.snd w p --nat.rec_on (M.fst.fst) tt (λ _ _, M.snd w p)
+| ~ p     := λ w, bnot (true_in_wrld p w)
+| (p ⊃ q) := λ w, (bnot (true_in_wrld p w)) || (true_in_wrld q w) 
+| ◻ p    := λ w, 
+    nat.rec_on M.fst.fst tt 
+    (λ v IH, IH && ((bnot (M.fst.snd w v)) || (true_in_wrld p v)))
+
+notation M `⦃`p`⦄` w := true_in_wrld M p w
+
+def nec_ff_exists_wrld_ff (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) (w : nat) (p : form) : 
+  ((M⦃◻p⦄w) = ff) ⇒ (∃ v, ((M.fst.snd w v) = tt) ∧ ((M⦃p⦄v) = ff)) := 
+begin
+  unfold true_in_wrld,
+  induction M.fst.fst with v IH,
+    simp, simp,
+    intro H,
+    cases H with H1 H2,
+     exact (IH H1),
+     exact ⟨v, H2⟩ 
+end
+
+def all_wrlds_tt_nec_tt (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) (w : nat) (p : form) : 
+(∀ v, ((M.fst.snd w v = tt) → (M⦃p⦄v) = tt)) ⇒ ((M⦃◻p⦄w) = tt)  := 
+begin
+  intro f,
+  apply eq_tt_of_not_eq_ff,
+  apply 
+    (show ¬ (∃ v, (_ = tt) ∧ (_ = ff)) ⇒ ¬ (_ = ff) , 
+      from λ f a, f ((nec_ff_exists_wrld_ff M w p) a) ),
+    intro g, 
+    cases g with v h,
+      cases h with h1 h2,
+        exact (bool.no_confusion (eq.trans (eq.symm (f v h1)) h2))
+end
+
+def nec_impl_to_nec_nec (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (w : nat) (p q : form) : 
+  ((M⦃◻(p ⊃ q)⦄w) = tt) → (M⦃◻p⦄w) = tt → (M⦃◻q⦄w) = tt := 
+begin
+  unfold true_in_wrld,
+  induction M.fst.fst with k IH,
+    simp, simp at *,
+      intros Hpq Hp,
+        cases Hpq with Hpq1 Hpq2,
+          cases Hp with Hp1 Hp2,
+            apply and.intro,
+              exact (IH Hpq1 Hp1),
+              cases Hpq2,
+                apply or.intro_left,
+                  assumption, 
+                cases Hp2,
+                  apply or.intro_left,
+                    assumption,
+                  cases Hpq2,
+                    exact (bool.no_confusion (eq.trans (eq.symm Hp2) Hpq2)),
+                    apply or.intro_right,
+                      assumption
+end
+
+definition nec_impl_ff_exist_wlrd_ff (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (w : nat) (p q : form) : 
+  ((M⦃◻(p ⊃ q)⦄ w) = ff) ⇒ (∃ k : nat, ((M⦃p⦄k) = tt) ∧ ((M⦃q⦄k) = ff)) := 
+begin
+  unfold true_in_wrld,
+  induction M.fst.fst with k IH,
+    simp, simp,
+    intro H,
+    cases H with H1 H2,
+      exact (IH H1),
+      cases H2,
+      exact ⟨k, H2_right⟩
+end
+
+def nec_nec_to_nec_impl_nec (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (w : nat) (p q : form) : 
+  ((M⦃◻p⦄w) = tt) → ((M⦃◻q⦄w) = tt) → ((M⦃(◻p) ⊃ (◻q)⦄w) = tt) := 
+begin
+  unfold true_in_wrld,
+  induction M.fst.fst with v IH,
+    intros H1 H2,
+    simp, simp,
+    intros H1 H2,
+    apply or.intro_right,
+      assumption
+end
+
+def impl_tt_to_impl (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (w : nat) (p q : form) : 
+   ((M⦃p⦄w) = tt → (M⦃q⦄w) = tt) → ((M⦃p ⊃ q⦄w) = tt) := 
+begin
+  unfold true_in_wrld,  
+  induction (true_in_wrld M p w),
+  repeat {
+    induction (true_in_wrld M q w),
+    simp, simp,
+  }
+end
+
+def tt_tt_to_impl (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (w : nat) (p q : form) : 
+   ((M⦃p⦄w) = tt) → ((M⦃q⦄w) = tt) → ((M⦃p ⊃ q⦄w) = tt) := 
+begin
+  unfold true_in_wrld,  
+  induction (true_in_wrld M p w),
+  repeat {
+    induction (true_in_wrld M q w),
+    simp, simp,
+  }
+end
+
+def nec_impl_to_nec_impl_nec (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (w : nat) (p q : form) : 
+  ((M⦃◻(p ⊃ q)⦄w) = tt) → ((M⦃◻p⦄w) = tt → (M⦃◻q⦄w) = tt) := 
+begin
+  unfold true_in_wrld,
+  induction M.fst.fst with k IH,
+    simp, simp,
+    intros H1 H2,
+      cases H1,
+        cases H2,
+          apply and.intro,
+            exact (IH H1_left H2_left),
+            cases H1_right,
+              apply or.intro_left,
+                assumption,
+                cases H1_right,
+                  cases H2_right,
+                    apply or.intro_left,
+                      assumption,
+                      exact (bool.no_confusion (eq.trans (eq.symm H2_right) H1_right)),
+                    apply or.intro_right,
+                      assumption
+end 
+
+/- Soundness -/
+
+inductive stsf (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (p : form) : Type 
+| is_true (m : Π (w : nat),  (M ⦃p⦄ w) = tt ) : stsf
+
+notation M `⊨ₖ` p := stsf M p
+
+definition wk_sndnss (p : form) (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) :
+( · ⊢ₖ p) ⇒ (M ⊨ₖ p) :=
+begin
+  intro H,
+  induction H,
+    repeat {
+      apply stsf.is_true,
+        intros w,
+        unfold true_in_wrld,
+        induction (true_in_wrld M H_p w), 
+          induction (true_in_wrld M H_q w),
+            simp, simp,
+          induction (true_in_wrld M H_q w),
+            simp, simp
+    },
+          induction (true_in_wrld M H_r w),
+            simp, simp,
+    
+    apply stsf.is_true,
+      induction H_ih_d₁, 
+        induction H_ih_d₂,
+          intros w,
+          apply eq.symm,
+            exact (
+              calc 
+                tt  = M⦃H_p ⊃ H_q⦄w  : eq.symm (H_ih_d₁ w)
+                ... = bnot (M⦃H_p⦄w)  || M⦃H_q⦄w  : rfl
+                ... = ff  || M⦃H_q⦄w  : eq.substr (H_ih_d₂ w) rfl
+                ... = M⦃H_q⦄w  : ff_bor _
+            ),
+    apply stsf.is_true,
+      intro w,
+      apply impl_tt_to_impl,
+        intro H,
+        apply impl_tt_to_impl,
+          apply nec_impl_to_nec_impl_nec,
+            assumption,
+    apply stsf.is_true,
+      intro w, 
+      unfold true_in_wrld,
+      induction H_ih,
+        induction M.fst.fst with k IH,
+          simp, simp,
+          apply and.intro,
+            exact IH,
+            induction ((M.fst).snd w k), 
+              simp, simp,
+              exact (H_ih k)
+end
+
+/- Soundness -/
+
+def ctx.true_in_wrld (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) : ctx → nat → bool
+| ·      := λ w, tt
+| (Γ ⸴ p) := λ w, ctx.true_in_wrld Γ w && M⦃p⦄w
+
+notation M `⦃`p`⦄` w := ctx.true_in_wrld M p w
+
+inductive sem_csq (Γ : ctx) (p : form) : Type 
+| is_true (m : Π (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) (w : nat), (M ⦃Γ⦄ w) = tt → (M ⦃p⦄ w) = tt ) : sem_csq
+
+notation Γ `⊨ₖ` p := sem_csq Γ p
+
+definition sndnss (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) (Γ : ctx) (p q : form)  :
+  (Γ ⊢ₖ p) ⇒ (Γ ⊨ₖ p) :=
+begin
+  intro H,
+  induction H,
+    repeat {
+      apply sem_csq.is_true,
+        intros M w csq,
+        unfold true_in_wrld ctx.true_in_wrld,
+        induction (true_in_wrld M H_p w), 
+          induction (true_in_wrld M H_q w),
+            simp, simp,
+          induction (true_in_wrld M H_q w),
+            simp, simp
+    },
+          induction (true_in_wrld M H_r w),
+            simp, simp,
+        
+      apply sem_csq.is_true,
+      induction H_ih_d₁, 
+        induction H_ih_d₂,
+        intros M w csq,
+          apply eq.symm,
+            exact (
+              calc 
+                tt  = M⦃H_p ⊃ H_q⦄w  : eq.symm (H_ih_d₁ M w csq)
+                ... = bnot (M⦃H_p⦄w)  || M⦃H_q⦄w  : rfl
+                ... = ff  || M⦃H_q⦄w  : eq.substr (H_ih_d₂ M w csq) rfl
+                ... = M⦃H_q⦄w  : ff_bor _
+            ),
+
+      apply sem_csq.is_true,
+        intros M w csq,
+        apply impl_tt_to_impl,
+          intro H,
+          apply impl_tt_to_impl,
+            apply nec_impl_to_nec_impl_nec,
+              assumption,
+
+      apply sem_csq.is_true,
+        intros M w csq,
+        unfold true_in_wrld ctx.true_in_wrld,
+      induction H_ih,
+        induction M.fst.fst with k IH,
+          simp, simp,
+          apply and.intro,
+            exact IH,
+            induction ((M.fst).snd w k), 
+              simp, simp,
+              exact (H_ih M k rfl)
+end
+
+-----------------------------------------------------
+
+def nec_true_allw (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) (w : nat) (p q : form) (ne : M.fst.snd w 0 = ff) :
+ (∃ v, (v ≤ M.fst.fst) ∧ ((M.fst.snd w v) = tt) ∧ ((M⦃p⦄v) = ff)) ⇒ ((M⦃◻p⦄w) = ff) :=
+begin
+  unfold true_in_wrld,    
+  induction M.fst.fst with k IH,
+    simp, intro H,
+    cases H with H1 H2,
+      cases H2,
+        cases (nat.eq_or_lt_of_le H2_left),
+          revert H2_right,
+          apply (eq.subst (eq.symm h)),
+            intro H,
+              cases H,
+                exact (bool.no_confusion (eq.trans (eq.symm H_left) ne)),
+          apply absurd, -- (absurd not_lt_zero h)        
+            exact h,
+            exact (not_lt_zero _),
+    simp,
+    intro H,
+
+end
+
+def nec_true_allw2 (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) (w : nat) (p : form) :
+((M⦃◻p⦄w) = tt) ⇒ (∀ v, ((M.fst.snd w v) = tt) → ((M⦃p⦄v) = tt)) :=
+begin
+  unfold true_in_wrld,    
+  induction M.fst.fst with k IH,
+  sorry,
+--##for succ:
+  simp,
+  intros H1 v H2,
+    cases H1,
+      exact (IH H1_left v H2)
+end
+
+-------------------------------
+
+
+-- Hp2 Hpq2
+
+-- (eq.trans (eq.symm (f v h1)) h2)
+
+#check @bool.no_confusion
+
+/--def nec_false_2 (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿)) (w : nat) (p : form) : 
+  (∃ v, ((M.fst.snd w v) = tt) ∧ ((M⦃p⦄v) = ff)) ⇒ (¬ (M⦃◻p⦄w) = tt) := 
+begin
+  unfold true_in_wrld,
+    intro H1,
+    induction H1 with v H1,
+    induction M.fst.fst with k IH,
+    sorry,
+    simp at *,
+    intro H2,
+      cases H2,
+        cases H2,
+          exact (bool.no_confusion (eq.trans (eq.symm H2_left) IH)),
+        cases H1,
+--          exact (bool.no_confusion (eq.trans (eq.symm H2) H1_right)),
+end--/
+
+#check bool
+
+definition quasi_K (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) ) (w : nat) (p q : form) : 
+  ((M⦃◻(p ⊃ q)⦄ w) = tt) ⇒ ((M⦃(◻p) ⊃ (◻q)⦄w) = tt) := 
+begin
+  intro H,
+  apply impl_tt_to_impl,
+    apply nec_impl_to_nec_impl_nec,
+      assumption
+end 
+
+variables (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) )  (w : nat) (p q : form) --(H : (M⦃◻(p ⊃ q)⦄w) = tt)
+#reduce (M⦃◻p⦄w) = tt
+#check p & q
+
+-------------
+
+
+definition bor_to_or {b1 b2 : bool} :
+((bnot b1) || b2 = tt) → (b1 = ff ∨ b2 = tt)  :=
+begin
+  intro p,
+  induction b1, simp, simp,
+  induction b2, simp, exact (bool.no_confusion p), simp
+end
+
+example (b : bool) :
+(b = ff ∨ b = tt) → (bnot b || b = tt) :=
+begin
+  intro w,
+  cases w,
+    induction b, simp, simp,
+    induction b, simp, simp
+end
+
+
+example {A : Type} (a b : A) (f : A → bool) (P : bool → Type) (H : P (f b) → P (f b)) :
+  P (f b) :=
+begin
+  revert H, induction (f b)
+end
+
+
+--end
+
+--------------------------------------------------------------------------
+
+open tactic
+
+meta def contra_false : list expr → tactic unit
+| []        := failed
+| (H :: Hs) :=
+  do t ← infer_type H >>= whnf,
+     match ht with
+     | `(and %%a %%b) := do sorry
+end
+
+
+#check 
+
+meta def ematch_test (h : name) : tactic unit :=
+do ctx ← local_context,
+_
+
+#check mk_dec_eq_instance
+
+--meta def trivial_induction {Γ : ctx} {p : form} (H : prf Γ p) : tactic expr :=
+
+meta def tri_nat : ℕ → tactic expr 
+| zero := do z ← zero >>= z
+| (succ n) := _
+
+def contssr (p q : form) (Γ : ctx):
+  (Γ ⸴ p ⸴ p ⊢ₖ q) ⇒ (Γ ⸴ p ⊢ₖ q) :=
+begin
+  intro H,
+  trivial_induction
+end
+
+/- Is in list nat -/
+
+
+
+--set_option pp.notation false
+
+#check deduction
+
+example (p q : form) :
+ · ⊢ₖ ◻ p ⊃ ◻ (q ⊃ p) := 
+prf.k (prf.nec prf.ax1))
+
+end mpl
+
+/--
+
+definition is_in_ctx (w : nat) : ctx → Type
+| nil := empty
+| (v::t) :=
+  match (dec_eq_ctx w v) with
+  | (is_true H) := unit
+  | (is_false H) := empty
+  end
+
+
+ --/

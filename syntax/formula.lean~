@@ -1,0 +1,171 @@
+/-
+Copyright (c) 2017 Bruno Bentzen. All rights reserved.
+Released under the Apache License 2.0 (see "License");
+Author: Bruno Bentzen
+-/
+
+open list nat bool tactic
+
+/- language -/
+
+inductive form : Type
+| atom : nat → form
+| neg : form → form
+| impl : form → form → form 
+| box : form → form
+
+notation `#` v := form.atom v
+notation `~` p := form.neg p
+notation p `⊃` q := form.impl p q
+notation `◻` p := form.box p
+notation `◇` p := ~ ◻ ~ p
+notation p `&` q := ~ (p ⊃ ~q)
+notation p `∨` q := ~ (~p & ~q)
+
+/- equality -/
+
+definition atom.code (α : nat) : form → Prop
+ | (#v) := (α = v)
+ | (~p) := false
+ | (p ⊃ q) := false
+ | (◻p) := false
+
+definition atom.encode (α : nat) (x : form) : (#α) = x → atom.code α x :=
+by intro h; induction h; unfold atom.code
+
+definition neg.code (α : form) : form → Prop
+ | (#v) := false
+ | (~p) := (α = p)
+ | (p ⊃ q) := false
+ | (◻p) := false
+
+definition neg.encode (α x : form) : (~α) = x → neg.code α x :=
+by intro h; induction h; unfold neg.code
+
+-------------------------------------------------------------------------
+
+variables (p : form) (h : (~p) = p)
+
+#check neg.encode p p h
+#reduce neg.code p (~p)
+
+example (p q : form) : (p = q) → ((~p) ≠ q) :=
+begin 
+  intros h ne,
+  --apply (neg.encode p p)
+end
+
+----------------------------------------------------------------
+
+definition impl.code (α β : form) : form → Prop
+ | (#v) := false
+ | (~p) := false
+ | (p ⊃ q) := (α = p) ∧ (β = q)
+ | (◻p) := false
+
+definition impl.encode (α β x : form) : (α ⊃ β) = x → impl.code α β x :=
+by intro h; induction h; unfold impl.code;  apply and.intro; simp
+
+definition box.code (α : form) : form → Prop
+ | (#v) := false
+ | (~p) := false
+ | (p ⊃ q) := false
+ | (◻p) := (α = p)
+
+definition box.encode (α x : form) : (◻α) = x → box.code α x :=
+by intro h; induction h; unfold box.code
+
+--example (p q : form) : (◻p) = (◻q) → p = q :=
+--by apply box.encode
+
+example (p q : nat) : (p ≠ q) → (#p) ≠ (#q) :=
+begin
+  intros ne h,
+  apply ne, apply (atom.encode p (#q)), assumption
+end
+
+#check @form.no_confusion
+#check @list.no_confusion_type
+
+def dec_eq_nat : decidable_eq nat :=
+by mk_dec_eq_instance
+
+def dec_eq_form :
+  Π (p q : form), (p = q) ∨ (p ≠ q) :=
+begin
+  intros p q,
+  induction p,
+    induction q,
+      cases (dec_eq_nat p q),
+        apply or.intro_right,
+          intro ne,
+          apply h,
+            apply (atom.encode p (#q)),
+            assumption,
+        apply or.intro_left,
+          induction h,
+          exact rfl, 
+      
+      repeat{
+        apply or.intro_right,
+          exact (λ H, form.no_confusion H)
+      },
+
+--    revert p_a,
+--    induction q,
+--      intros p h,
+--        apply or.intro_right,
+--          exact (λ H, form.no_confusion H),
+
+     cases p_ih
+end
+
+
+
+/--| (#v) (#w) := sorry --begin cases dec_eq_nat end
+| (#v) (~q) := begin apply or.intro_right, exact (λ H, form.no_confusion H) end
+| (#v) (q₁ ⊃ q₂) := begin apply or.intro_right, exact (λ H, form.no_confusion H) end
+| (#v) (◻q) := begin apply or.intro_right, exact (λ H, form.no_confusion H) end
+| (~p) (#w) := begin apply or.intro_right, exact (λ H, form.no_confusion H) end
+| (~p) (~q) := sorry
+| (~p) (q₁ ⊃ q₂) := sorry
+| (~p) (◻q) := sorry
+| (p₁ ⊃ p₂) (#w) := sorry
+| (p₁ ⊃ p₂) (~q) := sorry
+| (p₁ ⊃ p₂) (q₁ ⊃ q₂) := sorry
+| (p₁ ⊃ p₂) (◻q) := sorry
+| (◻p) (#w) := begin apply or.intro_right, exact (λ H, form.no_confusion H) end
+| (◻p) (~q) := sorry
+| (◻p) (q₁ ⊃ q₂) := sorry
+| (◻p) (◻q) := begin cases (dec_eq_form p q), apply or.intro_left, induction h, exact rfl, 
+   apply or.intro_right, intro H, end --exact (absurd h_1 h) end--/
+
+#check @eq.subst
+
+def dec_eq_ctx : Π {Γ Ψ : ctx}, (Γ = Ψ) ∨ (¬ (Γ = Ψ))
+| ·   · := by apply or.intro_left; exact rfl
+| · (Ψ ⸴ q) := begin apply or.intro_right, exact (λ H, list.no_confusion H) end
+| (Γ ⸴ p) · := begin apply or.intro_right, exact (λ H, list.no_confusion H) end
+| (Γ ⸴ p) (Ψ ⸴ q) := sorry
+
+definition is_in_ctx (w : nat) : ctx → Type
+| nil := empty
+| (v::t) :=
+  begin cases dec_eq_form end
+
+/--
+
+definition decode (α x : form) : box.code α x → (◻α) = x :=
+begin
+  induction x,
+    repeat{
+      unfold code,
+      intro h,
+      contradiction
+    },
+    unfold box.code, intro h,
+    induction h,
+    exact rfl
+end
+
+--/

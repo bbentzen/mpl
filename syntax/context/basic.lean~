@@ -1,0 +1,24 @@
+/-
+Copyright (c) 2017 Bruno Bentzen. All rights reserved.
+Released under the Apache License 2.0 (see "License");
+Author: Bruno Bentzen
+-/
+
+import ..language.basic
+
+/- definition -/ 
+
+def ctx : Type := list form
+
+notation `·` := list.nil
+notation Γ `⸴` p := list.cons p Γ
+notation Γ `∪` Ψ := append Γ Ψ
+notation `{` p `}` := [p]  
+
+
+
+definition mem : form → ctx → Prop
+| p ·       := false
+| p (Γ ⸴ q) := (p = q) ∨ (mem p Γ)
+
+--instance : has_mem form ctx := ⟨mem⟩
