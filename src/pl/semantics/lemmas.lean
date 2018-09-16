@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2017 Bruno Bentzen. All rights reserved.
+Copyright (c) 2018 Bruno Bentzen. All rights reserved.
 Released under the Apache License 2.0 (see "License");
 Author: Bruno Bentzen
 -/
@@ -12,23 +12,23 @@ variable {σ : nat}
 
 def neg_tt_iff_ff {v : var σ → bool} {p : form σ} :
   (⦃~p⦄v) = tt ⇔ (⦃p⦄v) = ff :=
-by unfold true_in_val; induction (true_in_val _ v p); simp; simp
+by unfold form_tt_in_val; induction (form_tt_in_val v p); simp; simp
 
 def neg_ff_iff_tt {v : var σ → bool} {p : form σ} :
   (⦃~p⦄v) = ff ⇔ (⦃p⦄v) = tt :=
-by unfold true_in_val; induction (true_in_val _ v p); simp; simp
+by unfold form_tt_in_val; induction (form_tt_in_val v p); simp; simp
 
 def impl_tt_iff_tt_implies_tt {v : var σ → bool} {p q : form σ} :
   (⦃p ⊃ q⦄v) = tt ⇔ ((⦃p⦄v) = tt ⇒ (⦃q⦄v) = tt) :=
-by unfold true_in_val; induction (true_in_val _ v p); repeat { induction (true_in_val _ v q), simp, simp }
+by unfold form_tt_in_val; induction (form_tt_in_val v p); repeat { induction (form_tt_in_val v q), simp, simp }
 
 def impl_tt_iff_ff_or_tt {v : var σ → bool} {p q : form σ} :
   (⦃p ⊃ q⦄v) = tt ⇔ ((⦃p⦄v) = ff ∨ (⦃q⦄v) = tt) :=
-by unfold true_in_val; induction (true_in_val _ v p); repeat { induction (true_in_val _ v q), simp, simp }
+by unfold form_tt_in_val; induction (form_tt_in_val v p); repeat { induction (form_tt_in_val v q), simp, simp }
 
 def impl_ff_iff_tt_and_tt {v : var σ → bool} {p q : form σ} :
   (⦃p ⊃ q⦄v) = ff ⇔ ((⦃p⦄v) = tt ∧ (⦃q⦄v) = ff) :=
-by unfold true_in_val; induction (true_in_val _ v p); repeat { induction (true_in_val _ v q), simp, simp }
+by unfold form_tt_in_val; induction (form_tt_in_val v p); repeat { induction (form_tt_in_val v q), simp, simp }
 
 
 def bot_is_insatisf : 
@@ -39,7 +39,7 @@ by intro h; cases h; exact (bool.no_confusion h_h)
 
 def cons_ctx_tt_iff_and {Γ : ctx σ} {p : form σ} {v : var σ → bool} :
   (⦃(Γ ⸴ p)⦄v) = tt ⇔ (⦃Γ⦄v) = tt ∧ (⦃p⦄v) = tt :=
-by unfold ctx.true_in_val; induction (ctx.true_in_val _ v Γ); repeat { induction (true_in_val _ v p), simp, simp }
+by unfold ctx_tt_in_val; induction (ctx_tt_in_val v Γ); repeat { induction (form_tt_in_val v p), simp, simp }
 
 def cons_ctx_tt_to_ctx_tt {Γ : ctx σ} {p : form σ} {v : var σ → bool} :
   (⦃(Γ ⸴ p)⦄v) = tt ⇒ (⦃Γ⦄v) = tt :=
@@ -48,8 +48,8 @@ by intro h; apply and.elim_left; apply cons_ctx_tt_iff_and.1 h
 def ctx_tt_cons_tt_to_cons_ctx_tt {Γ : ctx σ} {p : form σ} {v : var σ → bool} :
   (⦃Γ⦄v) = tt ⇒ (⦃p⦄v) = tt  ⇒ (⦃(Γ ⸴ p)⦄v) = tt :=
 begin
-  unfold ctx.true_in_val,
-  cases (true_in_val _ v p),
+  unfold ctx_tt_in_val,
+  cases (form_tt_in_val v p),
     simp, simp,
   apply id
 end
@@ -80,14 +80,13 @@ end
 def mem_tt_to_ctx_tt (Γ : ctx σ) {v : var σ → bool} :
  (∀ (p : form σ) (h : p ∈ Γ), (⦃p⦄ v) = tt) ⇒ (⦃Γ⦄ v) = tt :=
 begin
-  intro, induction Γ, reflexivity,
-  apply tt_and_tt_to_band_tt,
-    apply and.intro,
-      apply Γ_ih,
-        intros p pmem, apply a,
+  intro, induction Γ, reflexivity, simp,
+  apply cons_ctx_tt_iff_and.2, simp at *, split,
+    apply Γ_ih,
+    intros p pmem, apply a,
         apply or.intro_right, exact pmem,
       apply a,
-        apply or.intro_left, reflexivity
+        apply or.intro_left, reflexivity  
 end
 
 /- useful metatheorems -/

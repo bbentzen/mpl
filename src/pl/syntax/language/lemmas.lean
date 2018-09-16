@@ -1,12 +1,12 @@
 /-
-Copyright (c) 2017 Bruno Bentzen. All rights reserved.
+Copyright (c) 2018 Bruno Bentzen. All rights reserved.
 Released under the Apache License 2.0 (see "License");
 Author: Bruno Bentzen
 -/
 
 import .basic
 
-variable σ : nat
+variable {σ : nat}
 
 /- code & encode -/
 
@@ -16,7 +16,7 @@ def atom_code (α : var σ) : form σ → Prop
  | (p ⊃ q) := false
 
 def atom_encode (α : var σ) (x : form σ) :
-  #α = x → atom_code σ α x :=
+  #α = x → atom_code α x :=
 by intro h; induction h; unfold atom_code
 
 def neg_code (α : form σ) : form σ → Prop
@@ -25,7 +25,7 @@ def neg_code (α : form σ) : form σ → Prop
  | (p ⊃ q) := false
 
 def neg_encode (x : form σ) :
-   ⊥ = x → neg_code σ ⊥ x :=
+   ⊥ = x → neg_code ⊥ x :=
 by intro h; induction h; unfold neg_code
 
 def impl_code (α β : form σ) : form σ → Prop
@@ -34,7 +34,7 @@ def impl_code (α β : form σ) : form σ → Prop
  | (p ⊃ q) := (α = p) ∧ (β = q)
 
 def impl_encode (α β x : form σ) :
-  (α ⊃ β) = x → impl_code σ α β x :=
+  (α ⊃ β) = x → impl_code α β x :=
 by intro h; induction h; unfold impl_code;  apply and.intro; simp
 
 /- propositional equalities -/
@@ -55,15 +55,15 @@ by intro h; apply and.elim_left; apply impl_eq; exact h
 
 def atom_neq_bot (p : var σ) (p₁ q₂ : form σ) :
   #p ≠ ⊥ :=
-have hn : atom_code σ p ⊥ → false := id,
-  λ h, hn (atom_encode _ p ⊥ h)
+have hn : atom_code p ⊥ → false := id,
+  λ h, hn (atom_encode p ⊥ h)
 
 def atom_neq_impl (p : var σ) (p₁ q₂ : form σ) :
   (#p) ≠ (p₁ ⊃ q₂) :=
-have hn : atom_code σ p (p₁ ⊃ q₂) → false := id,
-  λ h, hn (atom_encode _ p (p₁ ⊃ q₂) h)
+have hn : atom_code p (p₁ ⊃ q₂) → false := id,
+  λ h, hn (atom_encode p (p₁ ⊃ q₂) h)
 
 def bot_neq_impl (p q : form σ) :
   ⊥ ≠ (p ⊃ q) :=
-have hn : neg_code σ ⊥ (p ⊃ q) → false := id,
-  λ h, hn (neg_encode _ (p ⊃ q) h)
+have hn : neg_code ⊥ (p ⊃ q) → false := id,
+  λ h, hn (neg_encode (p ⊃ q) h)

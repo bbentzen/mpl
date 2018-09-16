@@ -4,11 +4,11 @@ Released under the Apache License 2.0 (see "License");
 Author: Bruno Bentzen
 -/
 
-import ..language.basic ..misc
+import ..language.basic
 
 variable (σ : nat)
 
-/- context -/ 
+/- definition -/ 
 
 def ctx : Type := list (form σ)
 

@@ -8,15 +8,22 @@ import .language.basic .context.basic
 
 variable {σ : nat}
 
+/- the K system -/
+
 inductive prf (Γ : ctx σ) : form σ → Prop
-| ax  {p : form σ} (h : p ∈ Γ) : prf p
+| ax {p : form σ} (h : p ∈ Γ) : prf p
 | pl1 {p q : form σ} : prf (p ⊃ (q ⊃ p))
 | pl2 {p q r : form σ} : prf ((p ⊃ (q ⊃ r)) ⊃ ((p ⊃ q) ⊃ (p ⊃ r)))
 | pl3 {p q : form σ} :  prf (((~p) ⊃ ~q) ⊃ (((~p) ⊃ q) ⊃ p))
-| mp  {p q : form σ} (hpq: prf (p ⊃ q)) (hp : prf p) : prf q
+| mp {p q : form σ} (hpq: prf (p ⊃ q)) (hp : prf p) : prf q
+| k  {p q : form σ} : prf ((◻(p ⊃ q)) ⊃ ((◻p) ⊃ (◻q)))
+| nec {p : form σ} (cnil : Γ = ·) (h : prf p) : prf (◻p)
 
-notation Γ `⊢ₚ` p := prf Γ p
-notation Γ `⊬ₚ` p := prf Γ p → false
+axiom necwk {Γ : ctx σ} {p q : form σ} :
+  (prf Γ ◻p) → (prf (Γ ⸴ q) ◻p)
+
+notation Γ `⊢ₖ` p := prf Γ p
+notation Γ `⊬ₖ` p := prf Γ p → false
 
 /- metaconnectives -/
 

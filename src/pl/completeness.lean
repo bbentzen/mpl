@@ -1,12 +1,12 @@
 /-
-Copyright (c) 2017 Bruno Bentzen. All rights reserved.
+Copyright (c) 2018 Bruno Bentzen. All rights reserved.
 Released under the Apache License 2.0 (see "License");
 Author: Bruno Bentzen
 -/
 
 import .consistency .misc
 
-open nat classical
+open classical
 
 variables {σ : nat}
 
@@ -62,7 +62,7 @@ def tt_iff_in_max_set {Γ : ctx σ} {p : form σ} {m : max_set Γ} {c : is_consi
 begin
   simp at *,
     induction p,
-      unfold true_in_val, unfold max_cons_set_val, 
+      unfold form_tt_in_val, unfold max_cons_set_val, 
         induction (m (#p)),
           apply iff.intro, intro, assumption, intro, simp,
           apply iff.intro, contradiction, intro, simp,
@@ -84,14 +84,14 @@ begin
                 exact a_1,
                 apply prf.pl1,
               apply absurd a,
-                apply contrap p_ih_a.2, simp, exact h_1,
+                apply (contrap.1 p_ih_a.2), simp, exact h_1,
             cases (m (p_a ⊃ p_a_1)),
               assumption,
               apply false.elim, apply c,
                 apply prf.mp (prf.ax a),
                   apply prf.ax, apply (max_cons_set_clsd_prvb m c),
                     exact a_1, 
-                    apply prf.cut, apply prf.nimpl_to_and,
+                    apply prf.cut, apply prf.not_impl_to_and,
                       apply prf.deduction, apply prf.and_elim_left,
           simp at *, apply (max_cons_set_clsd_prvb m c),
             exact (p_ih_a_1.1 h_1),
@@ -102,7 +102,7 @@ begin
         apply or.intro_right,
           exact (p_ih_a_1.2 a),
         apply or.intro_left,
-        have nih : p_a ∉ Γ ⇒ true_in_val _ (max_cons_set_val m c) p_a ≠ tt := (contrap p_ih_a.1),
+        have nih : p_a ∉ Γ ⇒ form_tt_in_val (max_cons_set_val m c) p_a ≠ tt := (contrap.1 p_ih_a.1),
         simp at *, apply nih, intro ha, apply c,
         apply prf.mp (prf.ax a),
           apply prf.mp,
@@ -118,7 +118,7 @@ mem_tt_to_ctx_tt Γ (λ p, tt_iff_in_max_set.2)
 
 local attribute [instance] prop_decidable
 
--- TODO: give an explicit construction of the list
+-- TODO: give a brand new (explicit) construction of the list using sets
 
 axiom list_form (σ : nat) : list (form σ)
 
@@ -206,7 +206,7 @@ end
 def cmpltnss {Γ : ctx σ} {p : form σ} : 
   (Γ ⊨ₚ p) ⇒ (Γ ⊢ₚ p) :=
 begin
-  apply em_contrap, intros nhp hp, cases hp,
+  apply not_contrap, intros nhp hp, cases hp,
   have c : is_consist (Γ ⸴ ~p) := not_prvb_to_neg_consist nhp,
   apply absurd,
     apply hp,
@@ -222,4 +222,3 @@ begin
         apply (max_set_is_tt (ext_ctx_to_max_set (Γ ⸴ ~p))),
         exact ctx_is_subctx_of_ext
 end
-

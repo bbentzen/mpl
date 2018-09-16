@@ -1,10 +1,10 @@
 /-
-Copyright (c) 2017 Bruno Bentzen. All rights reserved.
+Copyright (c) 2018 Bruno Bentzen. All rights reserved.
 Released under the Apache License 2.0 (see "License");
 Author: Bruno Bentzen
 -/
 
-import .semantics.basic .misc
+import .semantics.lemmas .misc
 
 variable {σ : nat}
 
@@ -23,39 +23,39 @@ begin
           revert h_h, simp,
           cases h_h,
             induction h_h,
-              apply and.elim_right,
-                apply band_tt_to_tt_and_tt,
+              apply and.elim_right, 
+                apply cons_ctx_tt_iff_and.1,
                   exact ant,
             apply Γ_ih,
               exact h_h,
               apply and.elim_left,
-                apply band_tt_to_tt_and_tt,
+                apply cons_ctx_tt_iff_and.1,
                   exact ant,
     repeat {
       apply sem_csq.is_true,
         intros v ant,
-        unfold true_in_val ctx.true_in_val,
-        induction (true_in_val _ v h_p), 
-          induction (true_in_val _ v h_q),
+        unfold form_tt_in_val ctx_tt_in_val,
+        induction (form_tt_in_val v h_p), 
+          induction (form_tt_in_val v h_q),
             simp, simp,
-          induction (true_in_val _ v h_q),
+          induction (form_tt_in_val v h_q),
             simp, simp
     },
-          induction (true_in_val _ v h_r),
+          induction (form_tt_in_val v h_r),
             simp, simp,
 
       apply sem_csq.is_true,
       induction h_ih_hpq, 
         induction h_ih_hp,
         intros v ant,
-        have h1 : (bnot (true_in_val _ v h_p) || true_in_val _ v h_q) = tt :=
+        have h1 : (bnot (form_tt_in_val v h_p) || form_tt_in_val v h_q) = tt :=
            h_ih_hpq v ant,
-        have h2 : true_in_val _ v h_p = tt := 
+        have h2 : form_tt_in_val v h_p = tt := 
            h_ih_hp v ant, 
         revert h1 h2,
-        induction (true_in_val _ v h_p),
+        induction (form_tt_in_val v h_p),
           repeat {
-            induction (true_in_val _ v h_q),
+            induction (form_tt_in_val v h_q),
             simp, simp
           }
 end

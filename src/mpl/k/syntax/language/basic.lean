@@ -6,7 +6,7 @@ Author: Bruno Bentzen
 
 definition var : ℕ → Type := fin
 
-variable σ : nat
+variable (σ : nat)
 
 /- language definition -/
 
@@ -14,6 +14,7 @@ inductive form : Type
 | atom : var σ → form
 | bot : form
 | impl : form → form → form 
+| box : form → form
 
 notation `#` := form.atom
 notation `⊥` := form.bot _
@@ -21,3 +22,5 @@ notation `~` p := (form.impl p (form.bot _))
 notation p `⊃` q := (form.impl p q)
 notation p `&` q := (~ (p ⊃ ~q))
 notation p `∨` q := ~ (~p & ~q)
+notation `◻` p := (form.box p)
+notation `◇` p := (~ (◻ (~ p)))
