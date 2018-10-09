@@ -8,15 +8,17 @@ import .basic ..language.basic ..language.lemmas
 
 variable {σ : nat}
 
+def simp_mem {Γ : ctx σ} {p : form σ} : Γ p → p ∈ Γ := id
+
 /- context membership operations -/
 
 def trivial_mem_left {Γ : ctx σ} {p : form σ} :
   p ∈ (Γ ⸴ p) :=
-by apply or.intro_left; apply rfl
+by apply or.intro_left; reflexivity
 
 def trivial_mem_right {Γ : ctx σ} {p : form σ} :
   p ∈ ({p} ⊔ Γ) :=
-by apply or.intro_left; apply rfl
+by repeat {apply or.intro_left}; reflexivity
 
 def mem_ext_cons_left {Γ : ctx σ} {p q : form σ} :
   p ∈ Γ → p ∈ (Γ ⸴ q) :=
@@ -24,7 +26,7 @@ by intro h; apply or.intro_right; exact h
 
 def mem_ext_cons_left_cp {Γ : ctx σ} {p q : form σ} :
   p ∉ (Γ ⸴ q) → p ∉ Γ :=
-by intros hngq hng; apply hngq; apply mem_ext_cons_left; exact hng
+by intros hnpq hnp; apply hnpq; apply mem_ext_cons_left; exact hnp
 
 def mem_ext_cons_right {Γ : ctx σ} {p q : form σ} :
   p ∈ Γ → p ∈ ({q} ⊔ Γ) :=
@@ -32,11 +34,11 @@ by intro h; apply or.intro_right; exact h
 
 def mem_ext_append_left {Γ Δ : ctx σ} {p : form σ} :
   p ∈ Γ → p ∈ (Γ ⊔ Δ) :=
-by apply list.mem_append_left
+by intro; apply or.intro_left; assumption
 
 def mem_ext_append_right {Γ Δ : ctx σ} {p : form σ} :
   p ∈ Δ → p ∈ (Γ ⊔ Δ) :=
-by apply list.mem_append_right
+by intro; apply or.intro_right; assumption
 
 def mem_contr_cons_right {Γ : ctx σ} {p q : form σ} :
   p ∈ (Γ ⸴ q ⸴ q) → p ∈ (Γ ⸴ q) :=
@@ -52,10 +54,9 @@ def mem_contr_append_right {Γ Δ : ctx σ} {p : form σ} :
   p ∈ (Γ ⊔ Δ ⊔ Δ) → p ∈ (Γ ⊔ Δ) :=
 begin
   intro h,
-  cases (list.mem_append.1 h),
-    exact h_1,
-    apply mem_ext_append_right,
-      exact h_1
+    apply or.elim h,
+      exact id,
+      exact mem_ext_append_right,
 end
 
 def mem_exg_cons_right {Γ : ctx σ} {p q r : form σ} :
@@ -78,27 +79,21 @@ def mem_exg_append_right {Γ Δ : ctx σ} {p : form σ} :
   p ∈ (Γ ⊔ Δ) → p ∈ (Δ ⊔ Γ) :=
 begin
   intro h,
-  cases (list.mem_append.1 h),
-    apply mem_ext_append_right,
-      exact h_1,
-    apply mem_ext_append_left,
-      exact h_1,
+    apply or.elim h,
+      exact mem_ext_append_right,
+      exact mem_ext_append_left
 end
 
-def mem_exg_three_append_right {Γ Δ Δ' : ctx σ} {p : form σ} :
-  p ∈ (Γ ⊔ Δ ⊔ Δ') → p ∈ (Γ ⊔ Δ' ⊔ Δ) :=
+def mem_exg_three_append_right {Γ Δ Θ : ctx σ} {p : form σ} :
+  p ∈ (Γ ⊔ Δ ⊔ Θ) → p ∈ (Γ ⊔ Θ ⊔ Δ) :=
 begin
   intro h,
-  cases (list.mem_append.1 h),
-    cases (list.mem_append.1 h_1),
-      apply mem_ext_append_left,
-        apply mem_ext_append_left,
-          exact h_2,
-      apply mem_ext_append_right,
-        exact h_2,
-    apply mem_ext_append_left,
-      apply mem_ext_append_right,
-        exact h_1
+    apply or.elim h,
+      intro h_1,
+        apply or.elim h_1,
+          intro, repeat {apply or.intro_left}, assumption, 
+          intro, apply or.intro_right, assumption, 
+      intro, apply or.intro_left, apply or.intro_right, assumption
 end
 
 /- subcontext operations -/
@@ -114,3 +109,85 @@ end
 def sub_cons_is_sub {Γ Δ : ctx σ} {p : form σ} :
   (Δ ⸴ p) ⊆ Γ → Δ ⊆ Γ :=
 by intros s q qmem; apply s; apply mem_ext_cons_left qmem
+
+def mem_union_sub {Γ Δ Θ : ctx σ} :
+  (Γ ⊆ Θ) → (Δ ⊆ Θ) → (Γ ⊔ Δ) ⊆ Θ :=
+begin
+  intros hg hd,
+    intros p pm, cases pm,
+      apply hg, assumption,
+      apply hd, assumption
+end
+
+/- context equality -/
+
+def ctx_ext {Γ Δ : ctx σ} (h : ∀ p, p ∈ Γ ↔ p ∈ Δ) : Γ = Δ :=
+funext (assume x, propext (h x))
+
+def empty_ctx_eq {Γ : ctx σ} :
+  (∀ p : form σ, p ∉ Γ) → Γ = ∅ :=
+begin
+  intro h, apply ctx_ext,
+    intro p, apply iff.intro,
+      intro pm, apply false.rec, apply h, assumption,
+      intro pm, apply false.rec, assumption
+end
+
+def nonempty_ctx_has_mem {Γ : ctx σ} :
+  Γ ≠ ∅ → ∃ p, p ∈ Γ :=
+begin
+  cases (classical.prop_decidable (∀ p , p ∉ Γ)),
+    intro, apply classical.by_contradiction,
+      intro, apply h, apply forall_not_of_not_exists, assumption,
+    intro neq, apply false.rec, apply neq, 
+      apply empty_ctx_eq, assumption
+end
+
+def ctx_eq (Γ : ctx σ) :
+  Γ = ∅ ∨ (∃ Δ p, Γ = (Δ ⸴ p)) :=
+begin
+  cases (classical.prop_decidable (Γ = ∅)),
+    right, cases nonempty_ctx_has_mem h,
+      fapply exists.intro, exact (set.sep (λ p, p ≠ w) Γ),
+      fapply exists.intro, exact w,
+        apply ctx_ext,
+          intro p, apply iff.intro,
+            intro pm,
+                cases (classical.prop_decidable (p = w)),
+                  right, split, repeat {assumption},
+                  left, assumption,
+            intro pm, cases pm,
+              repeat {cases pm, assumption},
+    left, assumption
+end
+
+/-
+def ctx_eq2 (Γ : ctx σ) :
+  Γ = ∅ ∨ (∃ p, Γ = (Γ ⸴ p)) :=
+begin
+  cases (classical.prop_decidable (Γ = ∅)),
+    right, cases nonempty_ctx_has_mem h,
+--      fapply exists.intro, exact Γ,
+      fapply exists.intro, exact w,
+        apply ctx_ext,
+          intro p, apply iff.intro,
+            intro pm,
+                cases (classical.prop_decidable (p = w)),
+                  right, repeat {assumption},
+                  left, assumption,
+            intro pm, cases pm,
+              repeat {cases pm, assumption}, assumption,
+    left, assumption
+end
+
+#check @list.rec_on
+
+def ctx_rec : Π {C : ctx σ → Sort} (Γ : ctx σ),
+    C ∅ → (Π (p : form σ) (Δ : ctx σ), C Δ → C (Δ ⸴ p)) → C Γ :=
+begin
+  intros C Γ ce cf,
+    cases ctx_eq2 Γ,
+      cases h, assumption,
+      cases h, rewrite h_h,
+end ---/
+

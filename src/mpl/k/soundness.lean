@@ -4,7 +4,7 @@ Released under the Apache License 2.0 (see "License");
 Author: Bruno Bentzen
 -/
 
-import .semantics.default .semantics.lemmas
+import .semantics.lemmas
 
 variable {σ : nat}
 
@@ -23,13 +23,13 @@ begin
       apply sem_csq.is_true,
         intros M w ctt,
         unfold form_tt_in_wrld,
-          induction (form_tt_in_wrld _ M h_p w),
+          induction (form_tt_in_wrld M h_p w),
             repeat {
-              induction (form_tt_in_wrld _ M h_q w),
+              induction (form_tt_in_wrld M h_q w),
                 simp, simp,
             }
     },
-          induction (form_tt_in_wrld _ M h_r w),
+          induction (form_tt_in_wrld M h_r w),
                 simp, simp,
     apply sem_csq.is_true,
       induction h_ih_hpq,
@@ -60,5 +60,6 @@ begin
         intros v wmem vmem rwv,
           apply h_ih,
             apply eq.substr h_cnil,
-              unfold ctx_tt_in_wrld
+              unfold ctx_tt_in_wrld,
+              simp, intros, apply false.rec, assumption
 end

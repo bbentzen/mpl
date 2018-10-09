@@ -37,13 +37,43 @@ end
 
 /- structural rules -/
 
-def full_weak {Γ Δ : ctx σ} {p : form σ} :
+def union_weak_left {Γ Δ : ctx σ} {p : form σ} :
   (Γ ⊢ₚ p) ⇒ (Γ ⊔ Δ ⊢ₚ p) :=
 begin
   intro h,
   induction h,
     apply prf.ax,
       exact (mem_ext_append_left h_h),
+    exact prf.pl1 _,
+    exact prf.pl2 _,
+    exact prf.pl3 _,
+    apply prf.mp,
+      exact h_ih_hpq,
+      exact h_ih_hp
+end
+
+def union_weak_right {Γ Δ : ctx σ} {p : form σ} :
+  (Γ ⊢ₚ p) ⇒ (Δ ⊔ Γ ⊢ₚ p) :=
+begin
+  intro h,
+  induction h,
+    apply prf.ax,
+      exact (mem_ext_append_right h_h),
+    exact prf.pl1 _,
+    exact prf.pl2 _,
+    exact prf.pl3 _,
+    apply prf.mp,
+      exact h_ih_hpq,
+      exact h_ih_hp
+end
+
+def sub_weak {Γ Δ : ctx σ} {p : form σ} :
+  (Δ ⊢ₚ p) ⇒ (Δ ⊆ Γ) ⇒ (Γ ⊢ₚ p) :=
+begin
+  intros h s,
+  induction h,
+    apply prf.ax,
+      exact s h_h,
     exact prf.pl1 _,
     exact prf.pl2 _,
     exact prf.pl3 _,
@@ -73,9 +103,9 @@ begin
   intro h,
   induction h,
     apply prf.ax,
-      cases (list.mem_append.1 h_h),
-        exact h,
-        exact (mem_ext_append_right h),
+      apply or.elim h_h,
+        intro, assumption,
+        apply mem_ext_append_right,
     exact prf.pl1 _,
     exact prf.pl2 _,
     exact prf.pl3 _,
@@ -154,10 +184,11 @@ begin
     induction h,
       apply prf.ax,
         cases h_h,
-         induction h_h,
-           apply trivial_mem_right,
-           apply mem_ext_cons_left,
-             exact h_h,
+          cases h_h,
+            induction h_h,
+              apply trivial_mem_left,
+              apply false.rec, assumption,
+          apply mem_ext_cons_left, assumption,
       exact prf.pl1 _,
       exact prf.pl2 _,
       exact prf.pl3 _,
@@ -187,9 +218,9 @@ def subctx_contr {Γ Δ : ctx σ} {p : form σ}:
 begin
   intros s h,
   induction h,
-    cases (list.mem_append.1 h_h),
-      exact prf.ax h,
-      exact prf.ax (s h),
+    cases h_h,
+      exact prf.ax h_h,
+      exact prf.ax (s h_h),
     exact prf.pl1 _,
     exact prf.pl2 _,
     exact prf.pl3 _,
@@ -197,7 +228,6 @@ begin
       exact h_ih_hpq,
       exact h_ih_hp
 end
-
 
 /- right-hand side basic rules of inference -/
 
@@ -301,6 +331,19 @@ deduction (deduction
   )
 )
 
+def not_impl {Γ : ctx σ} {p q : form σ} : 
+  Γ ⊢ₚ (p ⊃ q) ⊃ ((~q) ⊃ (~p)) :=
+begin
+  repeat {apply prf.deduction},
+  apply prf.mp,
+    exact prf.pr1,
+      apply prf.mp,
+        apply prf.ax,
+          apply mem_ext_cons_left, apply mem_ext_cons_left,
+            exact trivial_mem_left,
+        exact prf.pr2
+end
+
 def dne {p : form σ} {Γ : ctx σ} :
   Γ ⊢ₚ (~~p) ⊃ p :=
 have h : Γ ⊢ₚ (~~p) ⊃ ((~p) ⊃ (~p)) := prf.mp (prf.pl1 _) id,
@@ -322,6 +365,17 @@ begin
       apply deduction,
         apply prf.mp, apply dne,
           exact (prf.mp pr1 pr2),
+end
+
+def and_not_to_not_impl {p q : form σ} {Γ : ctx σ} :
+  Γ ⊢ₚ (p & (~q)) ⊃ ~(p ⊃ q) :=
+begin
+  repeat {apply deduction},
+    apply prf.mp,
+      apply prf.pr1,
+      apply cut,
+        apply prf.pr2,
+        apply dni
 end
 
 /- notable introduction rules -/
@@ -350,9 +404,46 @@ begin
   exact (prf.mp pr1 pr2)
 end
 
+def ex_falso_pos {Γ : ctx σ} {p q : form σ} :
+  Γ ⊢ₚ p ⊃ ((~p) ⊃ q) :=
+begin
+  repeat {apply deduction},
+    apply prf.mp, apply prf.mp, apply ex_falso_and,
+      exact (prf.pr2),
+      exact (prf.pr1),
+end
+
+def contr_conseq {Γ : ctx σ} {p r : form σ} :
+  Γ ⊢ₚ (p ⊃ r) ⊃ (((~p) ⊃ r) ⊃ r) :=
+begin
+  repeat {apply deduction},
+    apply prf.mp, apply prf.mp,
+      apply prf.pl3, exact p,
+      apply prf.mp,
+        apply not_impl,
+        exact pr1,
+      apply cut,
+        apply prf.mp,
+          apply not_impl,
+            exact (~p),
+          apply pr2,
+        apply dne
+end
+
 def impl_weak {p q r : form σ} {Γ : ctx σ} (h : (Γ ⸴ r ⊢ₚ p) ⇒ (Γ ⊢ₚ p)) :
   ((Γ ⊢ₚ p) ⇒ (Γ ⊢ₚ q)) ⇒ ((Γ ⸴ r ⊢ₚ p) ⇒ (Γ ⸴ r ⊢ₚ q)) :=
 λ hpq hp, weak (hpq (h hp))
+
+def and_intro {Γ : ctx σ} {p q : form σ} :
+  (Γ ⊢ₚ p) ⇒ (Γ ⊢ₚ q) ⇒ (Γ ⊢ₚ (p & q)) :=
+begin
+  intros hp hq, apply deduction,
+    apply prf.mp,
+      apply prf.mp,
+        apply pr,
+      repeat {apply weak, assumption}
+end
+
 
 def and_elim_left {p q : form σ} {Γ : ctx σ} :
   (Γ ⸴ (p & q) ⊢ₚ p) :=
@@ -387,4 +478,81 @@ begin
               exact pr2
 end
 
+def or_intro_left {Γ : ctx σ} {p q r : form σ} :
+  (Γ ⊢ₚ p) ⇒ (Γ ⊢ₚ (p ∨ q)) :=
+begin
+  intros hp, simp,
+  apply prf.mp, apply dni,
+  apply deduction,
+    apply prf.mp,
+      apply prf.mp,
+        apply ex_falso_and,
+        exact pr,
+        apply weak, assumption
+end
+
+def or_intro_right {Γ : ctx σ} {p q r : form σ} :
+  (Γ ⊢ₚ q) ⇒ (Γ ⊢ₚ (p ∨ q)) :=
+begin
+  intros hp, simp,
+  apply prf.mp, apply dni,
+  apply deduction,
+    apply prf.mp, apply dni,
+      apply weak, assumption
+end
+
+def or_elim {Γ : ctx σ} {p q r : form σ} :
+  (Γ ⊢ₚ (p ∨ q)) ⇒ (Γ ⊢ₚ p ⊃ r) ⇒ (Γ ⊢ₚ q ⊃ r) ⇒ (Γ ⊢ₚ r) :=
+begin
+  intros hpq hpr hqr,
+  apply prf.mp, apply prf.mp,
+    apply contr_conseq,
+      exact p,
+      assumption,
+      apply cut,
+        apply prf.mp,
+          apply dne,
+          assumption,
+        apply cut,
+          exact dne,
+          assumption
+end
+
+def detach_pos {Γ : ctx σ} {p q : form σ} :
+  (Γ ⸴ p ⊢ₚ q) ⇒ (Γ ⸴ ~p ⊢ₚ q) ⇒ (Γ ⊢ₚ q) :=
+begin
+  intros hpq hnpq,
+  apply or_elim, apply lem,
+    repeat {apply deduction, assumption}
+end
+
+def detach_neg {Γ : ctx σ} {p q : form σ} :
+  (Γ ⸴ ~p ⊢ₚ q) ⇒ (Γ ⸴ p ⊢ₚ q) ⇒ (Γ ⊢ₚ q) :=
+begin
+  intros hpq hnpq,
+  apply or_elim, apply lem,
+    apply deduction, exact hnpq,
+    apply deduction, assumption
+end
+
+
 end prf
+
+def cases_ctx {Γ : ctx σ} {p : form σ} (hp : Γ ⊢ₚ p) :
+  Γ = ∅ ∨ (∃ Δ q, Γ = (Δ ⸴ q) ∧ (Δ ⊢ₚ p)) :=
+begin
+  cases (classical.prop_decidable (Γ = ∅)),
+    right, cases nonempty_ctx_has_mem h,
+      fapply exists.intro, exact Γ,
+      fapply exists.intro, exact w,
+        split, 
+          apply ctx_ext, intro p,
+            apply iff.intro,
+              intro pm,
+                cases (classical.prop_decidable (p = w)),
+                  right, repeat {assumption},
+                  left, assumption,
+            intro pm, cases pm,
+              cases pm, repeat {assumption},
+    left, assumption
+end

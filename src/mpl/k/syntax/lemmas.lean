@@ -21,9 +21,9 @@ prf.mp (prf.mp (@prf.pl2 σ Γ p (p ⊃ p) p) (prf.pl1 Γ)) (prf.pl1 Γ)
 def deduction {Γ : ctx σ} {p q : form σ} :
   (Γ ⸴ p ⊢ₖ q) ⇒ (Γ ⊢ₖ p ⊃ q) :=
 begin
-  intro h,
-  induction h,
-    cases h_h,
+ intro h,
+ induction h,
+   cases h_h,
      induction h_h,
        exact id,
        exact prf.mp (prf.pl1 Γ)  (prf.ax h_h),
@@ -33,24 +33,45 @@ begin
    apply prf.mp,
      exact (prf.mp (prf.pl2 _) h_ih_hpq),
      exact h_ih_hp,
-   exact prf.mp (prf.pl1 _) (prf.k _),
-   contradiction
+  exact prf.mp (prf.pl1 _) (prf.k _),
+  apply false.rec, apply has_append_ctx_not_empty, assumption
 end
 
-/- full necessitation -/
+/- the full necessitation rule -/
 
 def full_nec {Γ : ctx σ} {p : form σ} :
   (· ⊢ₖ p) ⇒ (Γ ⊢ₖ ◻p) :=
 begin
   intro h,
-  induction Γ,
-    apply nec,
-      reflexivity,
-      assumption,
-    apply necwk Γ_ih
+    apply nec_weak,
+      exact empty_sub_every_ctx,
+      apply prf.nec,
+        reflexivity,
+        assumption
 end
 
 /- structural rules -/
+
+def sub_weak {Γ Δ : ctx σ} {p : form σ} :
+  (Δ ⊢ₖ p) ⇒ (Δ ⊆ Γ) ⇒ (Γ ⊢ₖ p) :=
+begin
+  intros h s,
+  induction h,
+    apply prf.ax,
+      exact s h_h,
+    exact prf.pl1 _,
+    exact prf.pl2 _,
+    exact prf.pl3 _,
+    apply prf.mp,
+      exact h_ih_hpq,
+      exact h_ih_hp,
+    exact prf.k _,
+    apply nec_weak s,
+      apply prf.nec,
+        induction h_cnil,
+          reflexivity,
+          assumption
+end
 
 def weak {Γ : ctx σ} {p q : form σ} :
   (Γ ⊢ₖ p) ⇒ (Γ ⸴ q ⊢ₖ p) :=
@@ -66,7 +87,8 @@ begin
       exact h_ih_hpq,
       exact h_ih_hp,
     exact prf.k _,
-    apply necwk,
+    apply nec_weak,
+      intro, apply mem_ext_cons_left,
       apply prf.nec,
         induction h_cnil,
           reflexivity,
@@ -88,7 +110,7 @@ begin
       exact h_ih_hpq,
       exact h_ih_hp,
     exact prf.k _,
-    contradiction
+    apply false.rec, apply has_append_ctx_not_empty, assumption
 end
 
 def exg {p q r : form σ} {Γ : ctx σ} :
@@ -106,7 +128,7 @@ begin
       exact h_ih_hpq,
       exact h_ih_hp,
     exact prf.k _,
-    contradiction
+    apply false.rec, apply has_append_ctx_not_empty, assumption
 end
 
 /- subcontext operations -/
@@ -124,9 +146,11 @@ begin
       exact h_ih_hpq,
       exact h_ih_hp,
     exact prf.k _,
-    apply full_nec,
-      induction h_cnil,
-        assumption,
+    apply nec_weak s,
+      cases h_cnil,
+        apply prf.nec,
+          reflexivity,
+          assumption 
 end
 
 def subctx_contr {Γ Δ : ctx σ} {p : form σ}:
@@ -134,9 +158,9 @@ def subctx_contr {Γ Δ : ctx σ} {p : form σ}:
 begin
   intros s h,
   induction h,
-    cases (list.mem_append.1 h_h),
-      exact prf.ax h,
-      exact prf.ax (s h),
+    cases h_h,
+      exact prf.ax h_h,
+      exact prf.ax (s h_h),
     exact prf.pl1 _,
     exact prf.pl2 _,
     exact prf.pl3 _,
@@ -144,9 +168,9 @@ begin
       exact h_ih_hpq,
       exact h_ih_hp,
     exact prf.k _,
-    apply full_nec,
-      induction h_cnil,
-        assumption,
+    apply nec_weak s,
+      revert h_h, rewrite h_cnil,
+      apply full_nec
 end
 
 /- right-hand side basic rules of inference -/
@@ -203,7 +227,7 @@ begin
       exact h_ih_hpq,
       exact h_ih_hp,
     exact prf.k _,
-    contradiction
+    apply false.rec, apply has_append_ctx_not_empty, assumption
 end
 
 def mp_in_ctx_right {Γ : ctx σ} {p q r : form σ} :
@@ -229,7 +253,7 @@ begin
       exact h_ih_hpq,
       exact h_ih_hp,
     exact prf.k _,
-    contradiction
+    apply false.rec, apply has_append_ctx_not_empty, assumption
 end
 
 /- basic lemmas -/
@@ -255,6 +279,19 @@ deduction (deduction
   )
 )
 
+def not_impl {Γ : ctx σ} {p q : form σ} : 
+  Γ ⊢ₖ (p ⊃ q) ⊃ ((~q) ⊃ (~p)) :=
+begin
+  repeat {apply prf.deduction},
+  apply prf.mp,
+    exact prf.pr1,
+      apply prf.mp,
+        apply prf.ax,
+          apply mem_ext_cons_left, apply mem_ext_cons_left,
+            exact trivial_mem_left,
+        exact prf.pr2
+end
+
 def dne {p : form σ} {Γ : ctx σ} :
   Γ ⊢ₖ (~~p) ⊃ p :=
 have h : Γ ⊢ₖ (~~p) ⊃ ((~p) ⊃ (~p)) := prf.mp (prf.pl1 _) id,
@@ -265,10 +302,10 @@ def dni {p : form σ} {Γ : ctx σ} :
 prf.mp contrap dne 
 
 def lem {p : form σ} {Γ : ctx σ} :
-  Γ ⊢ₖ  p ∨ (~p) :=
+  Γ ⊢ₖ  p ∨ ~p :=
 prf.mp dni (prf.mp contrap dne)
 
-/-def nimpl_to_and {p q : form σ} {Γ : ctx σ} :
+def not_impl_to_and {p q : form σ} {Γ : ctx σ} :
   Γ ⊢ₖ (~(p ⊃ q)) ⊃ (p & (~q)) :=
 begin
   repeat {apply deduction},
@@ -276,22 +313,18 @@ begin
       apply deduction,
         apply prf.mp, apply dne,
           exact (prf.mp pr1 pr2),
-end-/
-
-def not_impl_to_and_not {p q : form σ} {Γ : ctx σ} :
-  Γ ⊢ₖ (~(p ⊃ q)) ⊃ (p & ~q) :=
-begin
-  repeat { apply deduction },
-    apply prf.mp,
-      exact pr1,
-      apply deduction,
-        apply prf.mp,
-          apply dne,
-          apply prf.mp,
-            exact pr1,
-            exact pr2
 end
 
+def and_not_to_not_impl {p q : form σ} {Γ : ctx σ} :
+  Γ ⊢ₖ (p & (~q)) ⊃ ~(p ⊃ q) :=
+begin
+  repeat {apply deduction},
+    apply prf.mp,
+      apply prf.pr1,
+      apply cut,
+        apply prf.pr2,
+        apply dni
+end
 
 /- notable introduction rules -/
 
@@ -319,9 +352,46 @@ begin
   exact (prf.mp pr1 pr2)
 end
 
+def ex_falso_pos {Γ : ctx σ} {p q : form σ} :
+  Γ ⊢ₖ p ⊃ ((~p) ⊃ q) :=
+begin
+  repeat {apply deduction},
+    apply prf.mp, apply prf.mp, apply ex_falso_and,
+      exact (prf.pr2),
+      exact (prf.pr1),
+end
+
+def contr_conseq {Γ : ctx σ} {p r : form σ} :
+  Γ ⊢ₖ (p ⊃ r) ⊃ (((~p) ⊃ r) ⊃ r) :=
+begin
+  repeat {apply deduction},
+    apply prf.mp, apply prf.mp,
+      apply prf.pl3, exact p,
+      apply prf.mp,
+        apply not_impl,
+        exact pr1,
+      apply cut,
+        apply prf.mp,
+          apply not_impl,
+            exact (~p),
+          apply pr2,
+        apply dne
+end
+
 def impl_weak {p q r : form σ} {Γ : ctx σ} (h : (Γ ⸴ r ⊢ₖ p) ⇒ (Γ ⊢ₖ p)) :
   ((Γ ⊢ₖ p) ⇒ (Γ ⊢ₖ q)) ⇒ ((Γ ⸴ r ⊢ₖ p) ⇒ (Γ ⸴ r ⊢ₖ q)) :=
 λ hpq hp, weak (hpq (h hp))
+
+def and_intro {Γ : ctx σ} {p q : form σ} :
+  (Γ ⊢ₖ p) ⇒ (Γ ⊢ₖ q) ⇒ (Γ ⊢ₖ (p & q)) :=
+begin
+  intros hp hq, apply deduction,
+    apply prf.mp,
+      apply prf.mp,
+        apply pr,
+      repeat {apply weak, assumption}
+end
+
 
 def and_elim_left {p q : form σ} {Γ : ctx σ} :
   (Γ ⸴ (p & q) ⊢ₖ p) :=
@@ -355,5 +425,63 @@ begin
                  apply trivial_mem_left,
               exact pr2
 end
+
+def or_intro_left {Γ : ctx σ} {p q r : form σ} :
+  (Γ ⊢ₖ p) ⇒ (Γ ⊢ₖ (p ∨ q)) :=
+begin
+  intros hp, simp,
+  apply prf.mp, apply dni,
+  apply deduction,
+    apply prf.mp,
+      apply prf.mp,
+        apply ex_falso_and,
+        exact pr,
+        apply weak, assumption
+end
+
+def or_intro_right {Γ : ctx σ} {p q r : form σ} :
+  (Γ ⊢ₖ q) ⇒ (Γ ⊢ₖ (p ∨ q)) :=
+begin
+  intros hp, simp,
+  apply prf.mp, apply dni,
+  apply deduction,
+    apply prf.mp, apply dni,
+      apply weak, assumption
+end
+
+def or_elim {Γ : ctx σ} {p q r : form σ} :
+  (Γ ⊢ₖ (p ∨ q)) ⇒ (Γ ⊢ₖ p ⊃ r) ⇒ (Γ ⊢ₖ q ⊃ r) ⇒ (Γ ⊢ₖ r) :=
+begin
+  intros hpq hpr hqr,
+  apply prf.mp, apply prf.mp,
+    apply contr_conseq,
+      exact p,
+      assumption,
+      apply cut,
+        apply prf.mp,
+          apply dne,
+          assumption,
+        apply cut,
+          exact dne,
+          assumption
+end
+
+def detach_pos {Γ : ctx σ} {p q : form σ} :
+  (Γ ⸴ p ⊢ₖ q) ⇒ (Γ ⸴ ~p ⊢ₖ q) ⇒ (Γ ⊢ₖ q) :=
+begin
+  intros hpq hnpq,
+  apply or_elim, apply lem,
+    repeat {apply deduction, assumption}
+end
+
+def detach_neg {Γ : ctx σ} {p q : form σ} :
+  (Γ ⸴ ~p ⊢ₖ q) ⇒ (Γ ⸴ p ⊢ₖ q) ⇒ (Γ ⊢ₖ q) :=
+begin
+  intros hpq hnpq,
+  apply or_elim, apply lem,
+    apply deduction, exact hnpq,
+    apply deduction, assumption
+end
+
 
 end prf

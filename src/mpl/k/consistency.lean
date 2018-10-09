@@ -4,7 +4,7 @@ Released under the Apache License 2.0 (see "License");
 Author: Bruno Bentzen
 -/
 
-import .soundness .syntax.lemmas .semantics.lemmas ..misc
+import .soundness .syntax.lemmas .semantics.lemmas
 
 open classical
 
@@ -67,6 +67,14 @@ begin
         repeat {apply (prop_decidable _)}
 end
 
+def pos_consist_mem {Γ : ctx σ} {p : form σ} :
+  p ∈ Γ ⇒ is_consist (Γ) ⇒ (~p) ∉ Γ :=
+λ hp hc hnp, hc (prf.mp (prf.ax hnp) (prf.ax hp))
+
+def neg_consist_mem {Γ : ctx σ} {p : form σ} :
+  (~p) ∈ Γ ⇒ is_consist (Γ) ⇒ p ∉ Γ :=
+λ hnp hc hp, hc (prf.mp (prf.ax hnp) (prf.ax hp))
+
 def pos_inconsist_ext {Γ : ctx σ} {p : form σ} (c : is_consist Γ) :
   p ∈ Γ ⇒ ¬is_consist (Γ ⸴ p) ⇒ (~p) ∈ Γ :=
 begin
@@ -105,7 +113,7 @@ end
 
 /- contradictions & interpretations -/
 
-def tt_to_const {Γ : ctx σ} {M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ} {w : ctx σ} :
+def tt_to_const {Γ : ctx σ} {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} :
   (M⦃Γ⦄w) = tt ⇒ is_consist Γ :=
 begin
   intros h hin,

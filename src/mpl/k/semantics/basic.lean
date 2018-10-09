@@ -4,15 +4,18 @@ Released under the Apache License 2.0 (see "License");
 Author: Bruno Bentzen
 -/
 
-import .default
+import ..default
 
 open classical
 
-variable (σ : nat)
+@[reducible]
+def wrld (σ : nat) : Type := ctx σ
+
+variable {σ : nat}
 
 /- Kripke models -/
 
-structure model := (wrlds : list (ctx σ)) (access : ctx σ → ctx σ → bool) (val : var σ → ctx σ → bool)
+structure model := (wrlds : set (wrld σ)) (access : wrld σ → wrld σ → bool) (val : var σ → wrld σ → bool)
 
 notation `𝓦` `⸴` `𝓡` `⸴` `𝓿` := model
 
@@ -22,7 +25,7 @@ notation `𝓿` `▹` M := M.val
 
 local attribute [instance] prop_decidable
 
-noncomputable def form_tt_in_wrld (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ) : form σ → ctx σ → bool
+noncomputable def form_tt_in_wrld (M : 𝓦 ⸴ 𝓡 ⸴ 𝓿) : form σ → wrld σ → bool
 |  (#p)   := λ w, (𝓿 ▹ M) p w
 |   ⊥     := λ w, ff 
 | (p ⊃ q) := λ w, (bnot (form_tt_in_wrld p w)) || (form_tt_in_wrld q w) 
@@ -31,20 +34,23 @@ noncomputable def form_tt_in_wrld (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ) : form σ �
 
 /- Satisfiability -/
 
-notation M `⦃` p `⦄` w := form_tt_in_wrld _ M p w
-inductive stsf (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ) (p : form σ) : Prop 
+notation M `⦃` p `⦄` w := form_tt_in_wrld M p w
+
+inductive stsf (M : 𝓦 ⸴ 𝓡 ⸴ 𝓿) (p : form σ) : Prop 
 | is_true (m : Π w, (M ⦃p⦄ w) = tt) : stsf
-notation M `⊨ₖ` p := stsf _ M p
+
+notation M `⊨ₖ` p := stsf M p
 
 /- Validity -/
 
-noncomputable def ctx_tt_in_wrld (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ) : ctx σ → ctx σ → bool
-| ·      := λ w, tt
-| (Γ ⸴ p) := λ w, ctx_tt_in_wrld Γ w && form_tt_in_wrld _ M p w
+local attribute [instance] classical.prop_decidable
 
-notation M `⦃` Γ `⦄` w := ctx_tt_in_wrld _ M Γ w
+noncomputable def ctx_tt_in_wrld (M : 𝓦 ⸴ 𝓡 ⸴ 𝓿) (Γ : ctx σ) : wrld σ → bool :=
+assume w, if (∀ p, p ∈ Γ → form_tt_in_wrld M p w = tt) then tt else ff
+
+notation M `⦃`Γ`⦄` w := ctx_tt_in_wrld M Γ w
 
 inductive sem_csq (Γ : ctx σ) (p : form σ) : Prop
-| is_true (m : Π (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ) w, (M ⦃Γ⦄ w) = tt → (M ⦃p⦄ w) = tt) : sem_csq
+| is_true (m : Π (M : 𝓦 ⸴ 𝓡 ⸴ 𝓿) (w : wrld σ), ((M ⦃Γ⦄ w) = tt) → (M ⦃p⦄ w) = tt) : sem_csq
 
-notation Γ `⊨ₖ` p := sem_csq _ Γ p
+notation Γ `⊨ₖ` p := sem_csq Γ p

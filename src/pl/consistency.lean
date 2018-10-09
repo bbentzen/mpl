@@ -4,7 +4,7 @@ Released under the Apache License 2.0 (see "License");
 Author: Bruno Bentzen
 -/
 
-import .soundness .semantics.lemmas
+import .soundness
 
 variables {σ : nat}
 
@@ -19,6 +19,50 @@ by apply contrap.1; exact prf.ex_falso
 def not_prvb_to_neg_consist {Γ : ctx σ} {p : form σ} :
   (Γ ⊬ₚ p) ⇒ is_consist (Γ ⸴ ~p) :=
 λ hnp hc, hnp (prf.mp prf.dne (prf.deduction hc))
+
+def contrad_not_consist_left {Γ : ctx σ} {p : form σ} :
+  ¬is_consist (Γ ⸴ p ⸴ ~p) :=
+λ hc, hc (prf.mp prf.pr2 prf.pr1)
+
+def contrad_not_consist_right {Γ : ctx σ} {p : form σ} :
+  ¬is_consist (Γ ⸴ ~p ⸴ p) :=
+λ hc, hc (prf.mp prf.pr1 prf.pr2)
+
+def not_consist_to_bot {Γ : ctx σ} :
+  ¬is_consist Γ ⇒ (Γ ⊢ₚ ⊥) :=
+begin
+  intro hc, cases (classical.em _),
+    assumption, contradiction
+end
+
+def mem_not_consist {Γ : ctx σ} {p : form σ} :
+  p ∈ Γ ⇒ (~p) ∈ Γ ⇒ ¬is_consist Γ  :=
+begin
+  intros pm npm nc, apply false.rec, apply nc, 
+    apply prf.mp, repeat {apply prf.ax, assumption}
+end
+
+def mem_not_consist_neg {Γ : ctx σ} {p : form σ} :
+  p ∈ Γ ⇒ ¬is_consist (Γ ⸴ ~p)  :=
+begin
+  intros pm hc, apply hc,
+  apply prf.mp,
+    apply prf.pr,
+    apply prf.weak,
+      apply prf.ax,
+        assumption
+end
+
+def mem_neg_not_consist {Γ : ctx σ} {p : form σ} :
+  (~p) ∈ Γ ⇒ ¬is_consist (Γ ⸴ p)  :=
+begin
+  intros pm hc, apply hc,
+  apply prf.mp,
+    apply prf.weak,
+      apply prf.ax,
+        assumption,
+    apply prf.pr,
+end
 
 def inconsist_to_neg_consist {Γ : ctx σ} {p : form σ} :
   is_consist Γ ⇒ ¬is_consist (Γ ⸴ p) ⇒ is_consist (Γ ⸴ ~p) :=
@@ -36,6 +80,68 @@ begin
     exact (prf.deduction hp),
 end
 
+def consist_exg {Γ : ctx σ} {p q : form σ} : 
+  is_consist (Γ ⸴ p ⸴ q) ⇒ is_consist (Γ ⸴ q ⸴ p) :=
+begin
+  intros hc hn,
+  apply hc, apply prf.exg,
+    assumption
+end
+
+def inconsist_exg {Γ : ctx σ} {p q : form σ} : 
+  ¬is_consist (Γ ⸴ p ⸴ q) ⇒ ¬is_consist (Γ ⸴ q ⸴ p) :=
+by apply contrap.1; exact consist_exg
+
+/- consistency and derivability -/
+
+def consist_proves_consist {Γ : ctx σ} {p : form σ} :
+  is_consist Γ ⇒ (Γ ⊢ₚ p) ⇒ is_consist (Γ ⸴ p) :=
+λ hc hp nc, hc (prf.mp (prf.deduction nc) hp)
+
+def consist_clsd_impl {Γ : ctx σ} {p q : form σ} :
+  is_consist (Γ ⸴ p) ⇒ (Γ ⊢ₚ p ⊃ q) ⇒ is_consist (Γ ⸴ q) :=
+begin
+  unfold is_consist,
+  intros hc hpq nc, apply hc,
+    apply prf.conv_deduction,
+      apply prf.mp,
+        apply prf.mp prf.not_impl hpq,
+        apply prf.deduction, assumption
+end
+
+def consist_not_prvb_neg {Γ : ctx σ} {p q : form σ} :
+  (is_consist (Γ ⸴ p ⸴ ~q)) ⇒ (Γ ⸴ p ⊬ₚ q) :=
+begin
+  unfold is_consist, intros hc hq,
+  apply hc, apply prf.mp,
+    apply prf.pr,
+    apply prf.weak hq
+end
+
+/- strenghtening -/
+
+def ctx_removable {Γ : ctx σ} {p : form σ} :
+  (Γ ⊢ₚ p) ⇒ is_consist (Γ ⸴ ~p) ⇒ (· ⊢ₚ p) :=
+begin
+  intros h hc,
+    induction h,
+      apply prf.ax, 
+        apply mem_not_consist_neg,
+          repeat {assumption},
+
+      exact prf.pl1 _,
+      exact prf.pl2 _,
+      exact prf.pl3 _,
+
+      apply false.rec,
+        apply hc, apply prf.conv_deduction,
+          apply prf.mp, apply prf.dni,
+            apply prf.mp,
+              repeat {assumption}
+end
+
+/- notable projections -/
+
 def consist_fst {Γ : ctx σ} {p : form σ} :
   is_consist (Γ ⸴ p) ⇒ is_consist Γ :=
 λ hc hn,  hc (prf.weak hn)
@@ -47,7 +153,7 @@ begin
   apply hc,
     apply iff.elim_right,
       exact prf.exg_left,
-    apply prf.full_weak,
+    apply prf.union_weak_left,
       exact hn
 end
 
@@ -97,6 +203,10 @@ end
 /- context extensions of subcontexts -/
 
 def sub_preserves_consist {Γ Δ : ctx σ} :
+  is_consist Γ  ⇒ Δ ⊆ Γ ⇒ is_consist Δ :=
+by intros hc sub nc; apply hc; apply prf.sub_weak nc; assumption
+
+def sub_preserves_consist_union {Γ Δ : ctx σ} :
   is_consist Γ  ⇒ is_consist Δ ⇒ Δ ⊆ Γ ⇒ is_consist (Γ ⊔ Δ) :=
 by intros c1 c2 s nc; apply c1; exact (prf.subctx_contr s nc)
 
@@ -122,4 +232,40 @@ begin
     apply bot_is_insatisf,
       apply exists.intro,
         exact (m v h)
+end
+
+/- notable consistent & inconsistent sets -/
+
+def theory_is_consist : @is_consist σ · :=
+begin
+  intro h, cases (sndnss h),
+    apply bot_is_insatisf, 
+      apply exists.intro, apply m,
+        unfold ctx_tt_in_val, simp, intros, apply false.rec, exact a,
+        exact (λ v, ff)
+end
+
+def pos_literal_is_consist {v : var σ} : @is_consist σ {#v} :=
+begin
+  intro h, cases (sndnss h),
+  apply bot_is_insatisf, 
+    apply exists.intro, apply m (λ v, tt),
+        unfold ctx_tt_in_val, simp, intros vv hv,
+        cases hv, cases (hv),
+          unfold form_tt_in_val, apply false.rec, assumption
+end
+
+def neg_literal_is_consist {v : var σ} : @is_consist σ {~#v} :=
+begin
+  intro h, cases (sndnss h),
+  apply bot_is_insatisf, 
+    apply exists.intro, apply m (λ v, ff),
+        unfold ctx_tt_in_val, simp, intros vv hv,
+        cases hv, cases (hv),
+          unfold form_tt_in_val, simp, apply false.rec, assumption
+end
+
+def bot_is_inconsist : ¬(@is_consist σ {⊥}) :=
+begin
+  intro h, apply h, exact prf.pr
 end

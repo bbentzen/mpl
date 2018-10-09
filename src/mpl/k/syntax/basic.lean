@@ -19,8 +19,8 @@ inductive prf (Γ : ctx σ) : form σ → Prop
 | k  {p q : form σ} : prf ((◻(p ⊃ q)) ⊃ ((◻p) ⊃ (◻q)))
 | nec {p : form σ} (cnil : Γ = ·) (h : prf p) : prf (◻p)
 
-axiom necwk {Γ : ctx σ} {p q : form σ} :
-  (prf Γ ◻p) → (prf (Γ ⸴ q) ◻p)
+axiom nec_weak {Γ Δ : ctx σ} {p : form σ} (h : Δ ⊆ Γ) :
+  (prf Δ ◻p) → (prf Γ ◻p)
 
 notation Γ `⊢ₖ` p := prf Γ p
 notation Γ `⊬ₖ` p := prf Γ p → false

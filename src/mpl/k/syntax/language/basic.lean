@@ -6,7 +6,7 @@ Author: Bruno Bentzen
 
 definition var : ℕ → Type := fin
 
-variable (σ : nat)
+variable σ : nat
 
 /- language definition -/
 

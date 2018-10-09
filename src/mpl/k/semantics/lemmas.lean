@@ -10,50 +10,50 @@ open classical
 
 variable {σ : nat}
 
-def not_ff_iff_tt {M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ} {w : ctx σ} {p : form σ} : (M⦃p⦄w) ≠ ff ⇔ (M⦃p⦄w) = tt := by simp
-def not_tt_iff_ff {M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ} {w : ctx σ} {p : form σ} : (M⦃p⦄w) ≠ tt ⇔ (M⦃p⦄w) = ff := by simp
+def not_ff_iff_tt {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} {p : form σ} : (M⦃p⦄w) ≠ ff ⇔ (M⦃p⦄w) = tt := by simp
+def not_tt_iff_ff {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} {p : form σ} : (M⦃p⦄w) ≠ tt ⇔ (M⦃p⦄w) = ff := by simp
 
 /- general facts about non-modal logical constants -/
 
-def neg_tt_iff_ff {M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ} {w : ctx σ} {p : form σ} :
+def neg_tt_iff_ff {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} {p : form σ} :
   (M⦃~p⦄w) = tt ⇔ (M⦃p⦄w) = ff :=
-by unfold form_tt_in_wrld; induction (form_tt_in_wrld _ M p w); simp; simp
+by unfold form_tt_in_wrld; induction (form_tt_in_wrld M p w); simp; simp
 
-def neg_ff_iff_tt {M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ} {w : ctx σ} {p : form σ} :
+def neg_ff_iff_tt {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} {p : form σ} :
   (M⦃~p⦄w) = ff ⇔ (M⦃p⦄w) = tt :=
-by unfold form_tt_in_wrld; induction (form_tt_in_wrld _ M p w); simp; simp
+by unfold form_tt_in_wrld; induction (form_tt_in_wrld M p w); simp; simp
 
-def impl_tt_iff_tt_implies_tt {M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ} {w : ctx σ} {p q : form σ} :
+def impl_tt_iff_tt_implies_tt {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} {p q : form σ} :
   (M⦃p ⊃ q⦄w) = tt ⇔ ((M⦃p⦄w) = tt ⇒ (M⦃q⦄w) = tt) :=
-by unfold form_tt_in_wrld; induction (form_tt_in_wrld _ M p w); repeat {induction (form_tt_in_wrld _ M q w), simp, simp}
+by unfold form_tt_in_wrld; induction (form_tt_in_wrld M p w); repeat {induction (form_tt_in_wrld M q w), simp, simp}
 
-def impl_tt_iff_ff_or_tt {M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ} {w : ctx σ} {p q : form σ} :
+def impl_tt_iff_ff_or_tt {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} {p q : form σ} :
   (M⦃p ⊃ q⦄w) = tt ⇔ ((M⦃p⦄w) = ff ∨ (M⦃q⦄w) = tt) :=
-by unfold form_tt_in_wrld; induction (form_tt_in_wrld _ M p w); repeat {induction (form_tt_in_wrld _ M q w), simp, simp}
+by unfold form_tt_in_wrld; induction (form_tt_in_wrld M p w); repeat {induction (form_tt_in_wrld M q w), simp, simp}
 
-def impl_ff_iff_tt_and_tt {M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ} {w : ctx σ} {p q : form σ} :
+def impl_ff_iff_tt_and_tt {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} {p q : form σ} :
   (M⦃p ⊃ q⦄w) = ff ⇔ ((M⦃p⦄w) = tt ∧ (M⦃q⦄w) = ff) :=
-by unfold form_tt_in_wrld; induction (form_tt_in_wrld _ M p w); repeat {induction (form_tt_in_wrld _ M q w), simp, simp}
+by unfold form_tt_in_wrld; induction (form_tt_in_wrld M p w); repeat {induction (form_tt_in_wrld M q w), simp, simp}
 
-def ff_or_tt_and_tt_implies_tt_right {M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ} {w : ctx σ} {p q : form σ} :
+def ff_or_tt_and_tt_implies_tt_right {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} {p q : form σ} :
   ((M⦃p⦄w) = ff ∨ (M⦃q⦄w) = tt) ⇒ (M⦃p⦄w) = tt ⇒ (M⦃q⦄w) = tt :=
-by unfold form_tt_in_wrld; induction (form_tt_in_wrld _ M p w); repeat {induction (form_tt_in_wrld _ M q w), simp, simp}
+by unfold form_tt_in_wrld; induction (form_tt_in_wrld M p w); repeat {induction (form_tt_in_wrld M q w), simp, simp}
 
-def ff_or_tt_and_tt_implies_tt_left {M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ} {w : ctx σ} {p q : form σ} :
+def ff_or_tt_and_tt_implies_tt_left {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} {p q : form σ} :
   ((M⦃p⦄w) = tt ∨ (M⦃q⦄w) = ff) ⇒ (M⦃q⦄w) = tt ⇒ (M⦃p⦄w) = tt :=
-by unfold form_tt_in_wrld; induction (form_tt_in_wrld _ M p w); repeat {induction (form_tt_in_wrld _ M q w), simp, simp}
+by unfold form_tt_in_wrld; induction (form_tt_in_wrld M p w); repeat {induction (form_tt_in_wrld M q w), simp, simp}
 
-def or_neq_to_or_eq {M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ} {w : ctx σ} {p q : form σ} :
+def or_neq_to_or_eq {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} {p q : form σ} :
   ((M⦃p⦄w) ≠ tt ∨ (M⦃q⦄w) ≠ ff) ⇒ ((M⦃p⦄w) = ff ∨ (M⦃q⦄w) = tt) :=
-by induction (form_tt_in_wrld _ M p w); repeat {induction (form_tt_in_wrld _ M q w), simp, simp}
+by induction (form_tt_in_wrld M p w); repeat {induction (form_tt_in_wrld M q w), simp, simp}
 
-def bot_is_insatisf {w : ctx σ} : 
-  ¬ ∃ (M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ), (M⦃⊥⦄ w) = tt :=
+def bot_is_insatisf {w : wrld σ} : 
+  ¬ ∃ (M : 𝓦 ⸴ 𝓡 ⸴ 𝓿), (M⦃⊥⦄ w) = tt :=
 by intro h; cases h; exact (bool.no_confusion h_h) 
 
 /- Modal logical constants (=>) -/
 
-def forall_wrld_tt_nec_tt {M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ} {w : ctx σ} {p : form σ} : 
+def forall_wrld_tt_nec_tt {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} {p : form σ} : 
   (∀ v, w ∈ (𝓦 ▹ M) → v ∈ (𝓦 ▹ M) → (𝓡 ▹ M) w v = tt → (M⦃p⦄v) = tt) ⇒ (M⦃◻p⦄w) = tt := 
 begin
   intro h, 
@@ -63,7 +63,7 @@ begin
     simp, assumption
 end
 
-def exists_wlrd_tt_pos_tt {M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ} {w : ctx σ} {p : form σ} : 
+def exists_wlrd_tt_pos_tt {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} {p : form σ} : 
   (∃ v, w ∈ (𝓦 ▹ M) ∧ v ∈ (𝓦 ▹ M) ∧ (𝓡 ▹ M) w v = tt ∧ (M⦃p⦄v) = tt) ⇒ (M⦃◇p⦄w) = tt := 
 begin
   intro h,
@@ -83,7 +83,7 @@ end
 
 /- Modal logical constants (<=) -/
 
-def nec_tt_forall_wrld_tt {M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ} {w : ctx σ} {p : form σ} : 
+def nec_tt_forall_wrld_tt {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} {p : form σ} : 
   (M⦃◻p⦄w) = tt ⇒ (∀ v, w ∈ (𝓦 ▹ M) → v ∈ (𝓦 ▹ M) → (𝓡 ▹ M) w v = tt → (M⦃p⦄v) = tt) := 
 begin
   unfold form_tt_in_wrld,
@@ -91,7 +91,7 @@ begin
     repeat {simp, exact id}
 end
 
-def pos_tt_exists_wlrd_tt {M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ} {w : ctx σ} {p : form σ} : 
+def pos_tt_exists_wlrd_tt {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} {p : form σ} : 
   (M⦃◇p⦄w) = tt ⇒ (∃ v, w ∈ (𝓦 ▹ M) ∧ v ∈ (𝓦 ▹ M) ∧ (𝓡 ▹ M) w v = tt ∧ (M⦃p⦄v) = tt) := 
 begin
   unfold form_tt_in_wrld,
@@ -112,13 +112,13 @@ begin
           apply nh, repeat {assumption}
 end
 
-def pos_ff_forall_wrld_ff {M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ} {w : ctx σ} {p : form σ} : 
+def pos_ff_forall_wrld_ff {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} {p : form σ} : 
   (M⦃◇p⦄w) = ff ⇒ (∀ v, w ∈ (𝓦 ▹ M) → v ∈ (𝓦 ▹ M) → (𝓡 ▹ M) w v = tt → (M⦃p⦄v) = ff) := 
 by unfold form_tt_in_wrld; simp; exact id
 
 /- Some facts about K -/
 
-def nec_impl_to_nec_impl_nec {M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ} {w : ctx σ} {p q : form σ} : 
+def nec_impl_to_nec_impl_nec {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} {p q : form σ} : 
   (M⦃◻(p ⊃ q)⦄w) = tt ⇒ (M⦃◻p⦄w) = tt ⇒ (M⦃◻q⦄w) = tt := 
 begin
   unfold form_tt_in_wrld, simp at *, intros hlpq hlp v wmem vmem rwv,
@@ -127,7 +127,7 @@ begin
     apply hlp, repeat {assumption}, 
 end
 
-def nec_impl_ff_exist_wlrd_ff {M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ} {w : ctx σ} {p q : form σ} : 
+def nec_impl_ff_exist_wlrd_ff {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} {p q : form σ} : 
   (M⦃◻(p ⊃ q)⦄ w)= ff ⇒ (∃ v, w ∈ (𝓦 ▹ M) ∧ v ∈ (𝓦 ▹ M) ∧ (𝓡 ▹ M) w v = tt ∧ (M⦃p⦄v) = tt ∧ (M⦃q⦄v) = ff) := 
 begin
   unfold form_tt_in_wrld,
@@ -149,7 +149,7 @@ begin
                     assumption
 end
 
-def nec_nec_to_nec_impl {M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ} {w : ctx σ} {p q : form σ} : 
+def nec_nec_to_nec_impl {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} {p q : form σ} : 
   (M⦃◻p⦄w) = tt ⇒ (M⦃◻q⦄w) = tt ⇒ (M⦃◻(p ⊃ q)⦄w) = tt  := 
 begin
   unfold form_tt_in_wrld, simp at *,
@@ -157,59 +157,74 @@ begin
     apply or.intro_right, apply hq, repeat {assumption}
 end
 
+/- general facts about contexts -/ 
+
+def ctx_tt_iff_mem_tt {Γ : ctx σ} {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} :
+  (M⦃Γ⦄w) = tt ⇔ (∀ p, p ∈ Γ ⇒ (M⦃p⦄w) = tt) :=
+begin
+  unfold ctx_tt_in_wrld,
+  induction (classical.prop_decidable _),
+    repeat {
+      apply iff.intro,
+        repeat {
+          simp, intro, assumption
+        } 
+    }
+end
+
+def mem_tt_to_ctx_tt (Γ : ctx σ) {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} :
+ (∀ (p : form σ) (h : p ∈ Γ), (M⦃p⦄w) = tt) ⇒ (M⦃Γ⦄w) = tt :=
+ctx_tt_iff_mem_tt.2
+
+def ctx_tt_to_mem_tt {Γ : ctx σ} {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} {p : form σ} :
+  (M⦃Γ⦄w) = tt ⇒ p ∈ Γ ⇒ (M⦃p⦄w) = tt :=
+by intro; apply ctx_tt_iff_mem_tt.1; assumption
+
 /- context projections -/
 
-def cons_ctx_tt_iff_and {Γ : ctx σ} {M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ} {w : ctx σ} {p : form σ} : 
+def cons_ctx_tt_iff_and {Γ : ctx σ} {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} {p : form σ} : 
   (M⦃(Γ ⸴ p)⦄w) = tt ⇔ (M⦃Γ⦄w) = tt ∧ (M⦃p⦄w) = tt :=
-by unfold ctx_tt_in_wrld; induction (ctx_tt_in_wrld _ M Γ w); repeat { induction (form_tt_in_wrld _ M p w), simp, simp }
+begin
+  unfold ctx_tt_in_wrld,
+  induction (classical.prop_decidable (∀ p, p ∈ Γ → form_tt_in_wrld M p w = tt)),
+    simp, apply iff.intro,
+      intro h', apply false.rec, apply h,
+        intros q qmem, apply h',
+          apply mem_ext_cons_left, assumption,
+      intro h', cases h', intros q qmem,
+        cases qmem,
+          induction qmem, assumption,
+          apply h'_left, assumption,
 
-def cons_ctx_tt_to_ctx_tt {Γ : ctx σ} {M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ} {w : ctx σ} {p : form σ} : 
+    simp, apply iff.intro,
+      intro h', split,
+        assumption,
+        apply h', apply trivial_mem_left,
+      intros h' q qmem,
+        cases h', cases qmem,
+          induction qmem, assumption,
+          apply h'_left, assumption,
+
+end
+
+def cons_ctx_tt_to_ctx_tt {Γ : ctx σ} {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} {p : form σ} : 
   (M⦃(Γ ⸴ p)⦄w) = tt ⇒ (M⦃Γ⦄w) = tt :=
 by intro h; apply and.elim_left; apply cons_ctx_tt_iff_and.1 h
 
-def ctx_tt_cons_tt_to_cons_ctx_tt {Γ : ctx σ} {M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ} {w : ctx σ} {p : form σ} : 
+def ctx_tt_cons_tt_to_cons_ctx_tt {Γ : ctx σ} {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} {p : form σ} : 
   (M⦃Γ⦄w) = tt ⇒ (M⦃p⦄w) = tt  ⇒ (M⦃(Γ ⸴ p)⦄w) = tt :=
-begin
-  unfold ctx_tt_in_wrld,
-  cases (form_tt_in_wrld _ M p w),
-    simp, simp,
-  apply id
-end
+by intros hg hp; apply cons_ctx_tt_iff_and.2; split; assumption; assumption
 
-/- more general facts -/ 
+/- sub-contexts -/
 
-def ctx_tt_to_mem_tt {Γ : ctx σ} {M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ} {w : ctx σ} {p : form σ} : 
-  (M⦃Γ⦄w) = tt ⇒ p ∈ Γ ⇒ (M⦃p⦄w) = tt :=
-begin
-  intros h memp, induction Γ, revert memp, simp,
-  cases memp,
-    induction memp, apply and.elim_right, apply cons_ctx_tt_iff_and.1 h,
-    apply Γ_ih, apply and.elim_left, apply cons_ctx_tt_iff_and.1 h, exact memp
-end
-
-def ctx_tt_to_subctx_tt {Γ Δ : ctx σ} {M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ} {w : ctx σ} : 
+def ctx_tt_to_subctx_tt {Γ Δ : ctx σ} {M : 𝓦 ⸴ 𝓡 ⸴ 𝓿} {w : wrld σ} : 
   (M⦃Γ⦄w) = tt ⇒ Δ ⊆ Γ ⇒ (M⦃Δ⦄w) = tt :=
 begin
-  intros h s,
-  induction Δ,
-    reflexivity,
-    unfold ctx_tt_in_wrld, simp at *, split,
-      apply Δ_ih, apply sub_cons_is_sub s,
-      apply ctx_tt_to_mem_tt h,
-        apply s trivial_mem_left
-end
-
-def mem_tt_to_ctx_tt (Γ : ctx σ) {M : (𝓦 ⸴ 𝓡 ⸴ 𝓿) σ} {w : ctx σ}  : 
- (∀ (p : form σ) (h : p ∈ Γ), (M⦃p⦄w) = tt) ⇒ (M⦃Γ⦄w) = tt :=
-begin
-  intro, induction Γ,
-    reflexivity,
-    unfold ctx_tt_in_wrld, simp at *, split,
-      apply Γ_ih,
-        intros p pmem, apply a,
-        apply or.intro_right, exact pmem,
-      apply a,
-        apply or.intro_left, reflexivity  
+  intros h s, 
+    apply ctx_tt_iff_mem_tt.2, 
+      intros p pmem,
+         apply ctx_tt_iff_mem_tt.1 h,
+           apply s, exact pmem
 end
 
 /- the deduction metatheorem -/
