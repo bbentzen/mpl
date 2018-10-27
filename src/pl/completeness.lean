@@ -20,7 +20,7 @@ def ext_ctx_to_max_set_at (Γ : ctx σ) : nat → ctx σ
 | 0     := ext_ctx_with_form Γ 0
 | (n+1) := ext_ctx_with_form (ext_ctx_to_max_set_at n) (n+1)
 
-@[reducible]
+--@[reducible]
 def ext_ctx_to_max_set (Γ : ctx σ) : ctx σ := 
 ⋃₀ (image (λ n, ext_ctx_to_max_set_at Γ n) {n | true})
 
@@ -32,8 +32,7 @@ begin
   intros n v,
     induction n,
       unfold ext_ctx_to_max_set_at ext_ctx_with_form,
-        induction (encodable.decode (form σ) _),
-         simp, apply id,
+        induction (encodable.decode (form σ) _), simp, 
          simp, induction (prop_decidable _), 
            repeat {simp, apply mem_ext_cons_left},
       unfold ext_ctx_to_max_set_at ext_ctx_with_form,
@@ -48,7 +47,7 @@ def ext_ctx_form_is_sub_ext_ctx_at {Γ : ctx σ} {n : nat} (hn : n ≥ 1) :
 begin
   induction n, unfold ext_ctx_to_max_set_at,
     intros _ _, apply false.rec, exact nat.no_confusion (eq_zero_of_le_zero hn),
-    unfold ext_ctx_to_max_set_at, simp, intro, apply id,
+    unfold ext_ctx_to_max_set_at, simp
 end
 
 def exists_ext_ctx_form_is_sub_ext_ctx_at {Γ : ctx σ} : 
@@ -62,11 +61,9 @@ begin
         simp, constructor, apply ctx_is_sub_ext_ctx_at,
         simp, induction (prop_decidable _), 
           simp, constructor, induction (prop_decidable _), 
-            simp, intro, apply id,
-            simp, contradiction,
+            simp, simp, contradiction,
           simp, constructor, induction (prop_decidable _), 
-            simp, contradiction,
-            simp, intro, apply id
+            simp, contradiction, simp
 end
 
 def ext_ctx_at_is_sub_max_set {Γ : ctx σ} : 
@@ -88,34 +85,26 @@ begin
   induction n,
     intro q,
     unfold ext_ctx_to_max_set_at ext_ctx_with_form,
-      simp, induction (encodable.decode (form σ) _), 
-        simp, intro, induction (encodable.decode (form σ) _),
-          simp, assumption,
-          simp, induction (prop_decidable _), 
-            repeat {simp, apply mem_ext_cons_left, assumption},
-        simp, induction (prop_decidable _), 
+      simp, induction (encodable.decode (form σ) _),
+        simp, simp, induction (prop_decidable _),
           repeat {
-            simp, induction (encodable.decode (form σ) _), 
-              simp, apply id,
-              simp, induction (prop_decidable _), 
-                repeat {simp, apply mem_ext_cons_left}
+            simp, induction (prop_decidable _),
+              repeat {simp, apply mem_ext_cons_left},
           },
+    
     intro q,
     unfold ext_ctx_to_max_set_at ext_ctx_with_form,
       induction (encodable.decode (form σ) _), simp,
         induction (encodable.decode (form σ) _), simp,
-          apply id,
           simp, induction (prop_decidable _), 
             repeat {simp, apply mem_ext_cons_left},
         simp, induction (prop_decidable _), 
           simp, induction (encodable.decode (form σ) _), simp,
-            apply id,
             simp, induction (prop_decidable _), 
               repeat {simp, apply mem_ext_cons_left},
-          simp, induction (encodable.decode (form σ) _),
-            simp, apply id,
+          simp, induction (encodable.decode (form σ) _), simp,
             simp, induction (prop_decidable _), 
-              repeat {simp, apply mem_ext_cons_left},
+              repeat {simp, apply mem_ext_cons_left} 
 end
 
 def ext_ctx_le_to_sub {Γ : ctx σ} {m n : nat} (h : n ≤ m) :
@@ -257,35 +246,42 @@ def tt_iff_in_max_set {Γ : ctx σ} {p : form σ} (hc : is_consist Γ) :
 begin
   induction p,
     unfold form_tt_in_val max_cons_set_val, simp,
-    unfold form_tt_in_val, simp,
-      intro, apply max_ext_preserves_consist hc,
+
+    unfold form_tt_in_val,
+      apply iff.intro, simp, intro, simp,  
+      apply max_ext_preserves_consist hc,
         apply prf.ax, assumption,
+
     unfold form_tt_in_val, simp at *,
     apply iff.intro,
-      intro h, cases h,
-        cases ext_ctx_is_max p_a_1,
+      intro h,
+        cases h, cases ext_ctx_is_max p_a,
           apply max_set_clsd_deriv hc,
             apply prf.mp, apply prf.pl1,
-            apply prf.ax, assumption,
+            apply prf.ax, apply p_ih_a_1.1 h,
           apply max_set_clsd_deriv hc,
             apply prf.mp, apply prf.contrap,
               apply prf.mp, apply prf.pl1,
-              apply prf.ax, cases ext_ctx_is_max p_a,
-                apply false.rec, apply ff_eq_tt_eq_false,
-                  exact (eq.trans (eq.symm h) (p_ih_a.2 h_2)),
-                assumption,
+              apply prf.ax, assumption,
         apply max_set_clsd_deriv hc,
-          apply prf.mp, apply prf.pl1,
-            apply prf.ax (p_ih_a_1.1 h), 
-    
+          cases ext_ctx_is_max p_a_1,
+            apply prf.mp, apply prf.pl1, apply prf.ax, assumption,
+            apply prf.mp, apply prf.contrap,
+              apply prf.mp, apply prf.pl1,
+                cases ext_ctx_is_max p_a,
+                  apply false.rec, apply ff_eq_tt_eq_false,
+                  exact (eq.trans (eq.symm h) (p_ih_a.2 h_2)),
+                apply prf.ax h_2,    
       intro h,
-        cases ext_ctx_is_max p_a,
-          right, apply p_ih_a_1.2,
-            apply max_set_clsd_deriv hc,
-              apply prf.mp, apply prf.ax h, apply prf.ax h_1,
-          left, apply eq_ff_of_not_eq_tt, intro p_a_tt,
-            apply max_ext_preserves_consist hc,
-              apply prf.mp, apply prf.ax h_1, apply prf.ax (p_ih_a.1 p_a_tt)
+        cases ext_ctx_is_max p_a_1,
+          left, exact p_ih_a_1.2 h_1,
+          cases ext_ctx_is_max p_a,
+            apply false.rec, apply max_ext_preserves_consist hc,
+              apply prf.mp (prf.ax h_1),
+                apply prf.mp (prf.ax h) (prf.ax h_2),
+            right, apply eq_ff_of_not_eq_tt, intro p_a_tt,
+              apply max_ext_preserves_consist hc,
+                apply prf.mp (prf.ax h_2) (prf.ax (p_ih_a.1 p_a_tt))
 end
 
 def max_set_is_tt (Γ : ctx σ) (hc : is_consist Γ) : 
