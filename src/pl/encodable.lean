@@ -291,7 +291,7 @@ match v with
               end 
 end
 
-lemma imp_encode_ge_three {p q : form σ} : 5^(encode_form p) * 7^(encode_form q) ≥ 3 :=
+lemma impl_encode_ge_three {p q : form σ} : 5^(encode_form p) * 7^(encode_form q) ≥ 3 :=
 have h₁ : 3 ≤ 5 := dec_trivial,
 have h₂ : 1 ≤ 5 := dec_trivial,
 have h₃ : 1 ≤ 7 := dec_trivial,
@@ -311,8 +311,7 @@ def encodek_impl {p q : form σ} :
   decode_form σ (encode_form (p ⊃ q)) = some (p ⊃ q) :=
 begin
   intros hp hq, unfold encode_form,
-  have hle : 5^(encode_form p) * 7^(encode_form q) ≥ 3 := imp_encode_ge_three,
-  rw decode_form_lemma hle, unfold ite, 
+  rw decode_form_lemma impl_encode_ge_three, unfold ite, 
   induction is_atom_dec,
     simp, induction is_impl_dec,
       cases le.dest (encode_ge_one p), rw nat.add_comm at h_2,

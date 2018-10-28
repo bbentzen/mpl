@@ -47,7 +47,7 @@ def ext_ctx_form_is_sub_ext_ctx_at {Γ : ctx σ} {n : nat} (hn : n ≥ 1) :
 begin
   induction n, unfold ext_ctx_to_max_set_at,
     intros _ _, apply false.rec, exact nat.no_confusion (eq_zero_of_le_zero hn),
-    unfold ext_ctx_to_max_set_at, simp, intro, apply id,
+    unfold ext_ctx_to_max_set_at, simp
 end
 
 def exists_ext_ctx_form_is_sub_ext_ctx_at {Γ : ctx σ} : 
@@ -61,11 +61,10 @@ begin
         simp, constructor, apply ctx_is_sub_ext_ctx_at,
         simp, induction (prop_decidable _), 
           simp, constructor, induction (prop_decidable _), 
-            simp, intro, apply id,
+            simp, intro,
             simp, contradiction,
           simp, constructor, induction (prop_decidable _), 
-            simp, contradiction,
-            simp, intro, apply id
+            simp, contradiction, simp
 end
 
 def ext_ctx_at_is_sub_max_set {Γ : ctx σ} : 
@@ -88,16 +87,12 @@ begin
     intro q,
     unfold ext_ctx_to_max_set_at ext_ctx_with_form,
       simp, induction (encodable.decode (form σ) _), 
-        simp, intro, induction (encodable.decode (form σ) _),
-          simp, assumption,
-          simp, induction (prop_decidable _), 
-            repeat {simp, apply mem_ext_cons_left, assumption},
-        simp, induction (prop_decidable _), 
+        simp, simp, induction (prop_decidable _), 
           repeat {
-            simp, induction (encodable.decode (form σ) _), 
-              simp,
-              simp, induction (prop_decidable _), 
-                repeat {simp, apply mem_ext_cons_left}
+            simp, induction (prop_decidable _),
+              repeat {
+                simp, apply mem_ext_cons_left
+              },
           },
     intro q,
     unfold ext_ctx_to_max_set_at ext_ctx_with_form,
@@ -276,10 +271,9 @@ def unbox_form_in_wrld (w : wrld σ) : nat → wrld σ :=
 λ n, option.rec_on (encodable.decode (form σ) n) · 
   (λ p, form.rec_on p
     (λ v, ·) · (λ q r _ _, ·) 
-    (λ q _, if (◻q) ∈ w then {q} else · ) --then set.sep (λ x, x ≠ ◻q) (w ⸴ q) else · )
+    (λ q _, if (◻q) ∈ w then {q} else · )
   )
 
-@[reducible]
 def unbox_wrld (w : wrld σ) : wrld σ := 
 ⋃₀ (image (λ n, unbox_form_in_wrld w n) {n | true})
 
@@ -313,21 +307,18 @@ begin
             repeat {simp, intro h, apply false.rec, assumption},
             simp, unfold ite, induction (prop_decidable _),
               simp, intro, apply false.rec, assumption,
-              simp, intro h, cases h,
-                  rewrite h_1, assumption,
-                  apply false.rec, assumption,
+              simp, intro h, cases h, assumption,
     intro h, unfold unbox_wrld image sUnion,
       constructor, constructor, constructor, constructor,
         trivial, reflexivity,
         exact encodable.encode (◻p),
         unfold unbox_form_in_wrld ite,
-          rewrite (encodable.encodek ◻p),
+          rw (encodable.encodek ◻p),
             simp, induction p,
             repeat {
               induction prop_decidable _,
-                contradiction,
-                simp, exact trivial_mem_left
-            }        
+                contradiction, simp,
+            }
 end
 
 def not_box_in_wrld_not_in_unbox {p : form σ} {w : wrld σ} (hc : w ∈ set_max_wrlds σ) :
@@ -394,30 +385,33 @@ begin
       cases wm, cases wm_h, induction wm_h_right,
         apply iff.intro,
           intro h, cases h,
-            cases ext_ctx_is_max p_a_1,
+            cases ext_ctx_is_max p_a,
                   apply max_set_clsd_deriv, assumption,
               apply prf.mp, apply prf.pl1,
-              apply prf.ax, assumption,
+              apply prf.ax, apply ((p_ih_a_1 _ (max_cons_set_in_all_wrlds wm_h_left)).1 h),
             apply max_set_clsd_deriv, assumption,
               apply prf.mp, apply prf.contrap,
                 apply prf.mp, apply prf.pl1,
-                apply prf.ax, cases ext_ctx_is_max p_a,
-                  apply false.rec, apply ff_eq_tt_eq_false,
-                    exact (eq.trans (eq.symm h) ((p_ih_a _ (max_cons_set_in_all_wrlds wm_h_left)).2 h_2)),
-                  assumption,
-          apply max_set_clsd_deriv, assumption,
-            apply prf.mp, apply prf.pl1,
-              apply prf.ax ((p_ih_a_1 _ (max_cons_set_in_all_wrlds wm_h_left)).1 h), 
-        intro h,
-          cases ext_ctx_is_max p_a,
-            right, apply (p_ih_a_1 _ (max_cons_set_in_all_wrlds wm_h_left)).2,
-              apply max_set_clsd_deriv, assumption,
-                apply prf.mp, apply prf.ax h, apply prf.ax h_1,
-            left, apply eq_ff_of_not_eq_tt, intro p_a_tt,
+                apply prf.ax, assumption, 
+            apply max_set_clsd_deriv, assumption,
+              cases ext_ctx_is_max p_a_1,
+                apply prf.mp, apply prf.pl1, apply prf.ax, assumption,
+                apply prf.mp, apply prf.contrap,
+                  apply prf.mp, apply prf.pl1,
+                    cases ext_ctx_is_max p_a,
+                      apply false.rec, apply ff_eq_tt_eq_false,
+                      exact (eq.trans (eq.symm h) ((p_ih_a _ (max_cons_set_in_all_wrlds wm_h_left)).2 h_2)),
+                    apply prf.ax h_2,
+          intro h,
+            cases ext_ctx_is_max p_a_1,
+              left, exact ((p_ih_a_1 _ (max_cons_set_in_all_wrlds wm_h_left)).2 h_1),
+              cases ext_ctx_is_max p_a,
+            apply false.rec, apply max_ext_preserves_consist, assumption,
+              apply prf.mp (prf.ax h_1),
+                apply prf.mp (prf.ax h) (prf.ax h_2),
+            right, apply eq_ff_of_not_eq_tt, intro p_a_tt,
               apply max_ext_preserves_consist, assumption,
-                apply prf.mp,
-                  apply prf.ax h_1,
-                  apply prf.ax ((p_ih_a _ (max_cons_set_in_all_wrlds wm_h_left)).1 p_a_tt),
+                apply prf.mp (prf.ax h_2) (prf.ax ((p_ih_a _ (max_cons_set_in_all_wrlds wm_h_left)).1 p_a_tt)),
 
     unfold form_tt_in_wrld, simp, intros, 
       apply iff.intro,
@@ -433,15 +427,16 @@ begin
                     apply h,
                       assumption,
                       exact max_cons_set_in_all_wrlds (not_box_in_wrld_to_consist_not wm h_1),
-                      unfold canonical_model wrlds_to_access, simp, 
+                      unfold canonical_model wrlds_to_access, simp,
                         intros p pm, apply ctx_is_subctx_of_max_ext, 
+                        
                           apply mem_ext_cons_left, assumption,
         intros h v, unfold canonical_model wrlds_to_access,
           simp, intros ww vw rwv,
             apply (p_ih _ vw).2,
               apply rwv, apply in_unbox_box_in_wrld.2,
                 assumption
-end
+end 
 
 def ctx_is_tt (Γ : ctx σ) (wm : Γ ∈ set_max_wrlds σ) : 
   (canonical_model ⦃Γ⦄ Γ) = tt :=

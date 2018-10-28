@@ -84,6 +84,8 @@ lemma prime_five : prime 5 := sorry --why dec_trivial is not working?
 
 lemma prime_seven : prime 7 := sorry
 
+lemma prime_eleven : prime 11 := sorry
+
 lemma prime_dvd_exp {n : ℕ} (p_n : prime n) (m > 0) : 
   n ∣ n^m :=
 have hm : ∃ i, m = i + 1 := by cases le.dest H; rw nat.add_comm at h; exact ⟨ w, eq.symm h ⟩,
