@@ -15,13 +15,13 @@ namespace prf
 /- identity implication -/
 
 def id {p : form σ} {Γ : ctx σ} :
-  Γ ⊢ₖ p ⊃ p :=
+  Γ ⊢ₛ₄ p ⊃ p :=
 mp (mp (@pl2 σ Γ p (p ⊃ p) p) (pl1 Γ)) (pl1 Γ)
 
 /- deduction metatheorem -/
 
 def deduction {Γ : ctx σ} {p q : form σ} :
-  (Γ ⸴ p ⊢ₖ q) → (Γ ⊢ₖ p ⊃ q) :=
+  (Γ ⸴ p ⊢ₛ₄ q) ⇒ (Γ ⊢ₛ₄ p ⊃ q) :=
 begin
  intro h,
  induction h,
@@ -36,13 +36,15 @@ begin
      exact (mp (pl2 _) h_ih_hpq),
      exact h_ih_hp,
   exact mp (pl1 _) (k _),
+  exact mp (pl1 Γ) (t Γ),
+  exact mp (pl1 Γ) (s4 Γ),
   apply false.rec, apply has_append_ctx_not_empty, assumption
 end
 
 /- the full necessitation rule -/
 
 def full_nec {Γ : ctx σ} {p : form σ} :
-  (· ⊢ₖ p) → (Γ ⊢ₖ ◻p) :=
+  (· ⊢ₛ₄ p) ⇒ (Γ ⊢ₛ₄ ◻p) :=
 begin
   intro h,
     apply nec_weak,
@@ -55,7 +57,7 @@ end
 /- structural rules -/
 
 def sub_weak {Γ Δ : ctx σ} {p : form σ} :
-  (Δ ⊢ₖ p) → (Δ ⊆ Γ) → (Γ ⊢ₖ p) :=
+  (Δ ⊢ₛ₄ p) ⇒ (Δ ⊆ Γ) ⇒ (Γ ⊢ₛ₄ p) :=
 begin
   intros h s,
   induction h,
@@ -68,6 +70,8 @@ begin
       exact h_ih_hpq,
       exact h_ih_hp,
     exact k _,
+    exact t _,
+    exact s4 _,
     apply nec_weak s,
       apply nec,
         induction h_cnil,
@@ -76,7 +80,7 @@ begin
 end
 
 def weak {Γ : ctx σ} {p q : form σ} :
-  (Γ ⊢ₖ p) → (Γ ⸴ q ⊢ₖ p) :=
+  (Γ ⊢ₛ₄ p) ⇒ (Γ ⸴ q ⊢ₛ₄ p) :=
 begin
   intro h,
   induction h,
@@ -89,6 +93,8 @@ begin
       exact h_ih_hpq,
       exact h_ih_hp,
     exact k _,
+    exact t _,
+    exact s4 _,
     apply nec_weak,
       intro, apply mem_ext_cons_left,
       apply nec,
@@ -98,7 +104,7 @@ begin
 end
 
 def contr {Γ : ctx σ} {p q : form σ} :
-  (Γ ⸴ p ⸴ p ⊢ₖ q) → (Γ ⸴ p ⊢ₖ q) :=
+  (Γ ⸴ p ⸴ p ⊢ₛ₄ q) ⇒ (Γ ⸴ p ⊢ₛ₄ q) :=
 begin
   intro h,
   induction h,
@@ -112,11 +118,13 @@ begin
       exact h_ih_hpq,
       exact h_ih_hp,
     exact k _,
+    exact t _,
+    exact s4 _,
     apply false.rec, apply has_append_ctx_not_empty, assumption
 end
 
 def exg {p q r : form σ} {Γ : ctx σ} :
-  (Γ ⸴ p ⸴ q ⊢ₖ r) → (Γ ⸴ q ⸴ p ⊢ₖ r) :=
+  (Γ ⸴ p ⸴ q ⊢ₛ₄ r) ⇒ (Γ ⸴ q ⸴ p ⊢ₛ₄ r) :=
 begin
   intro h,
   induction h,
@@ -130,13 +138,15 @@ begin
       exact h_ih_hpq,
       exact h_ih_hp,
     exact k _,
+    exact t _,
+    exact s4 _,
     apply false.rec, apply has_append_ctx_not_empty, assumption
 end
 
 /- subcontext operations -/
 
 def subctx_ax {Γ Δ : ctx σ} {p : form σ} :
-   Δ ⊆ Γ → (Δ ⊢ₖ p) → (Γ ⊢ₖ p) :=
+   Δ ⊆ Γ ⇒ (Δ ⊢ₛ₄ p) ⇒ (Γ ⊢ₛ₄ p) :=
 begin
   intros s h,
   induction h,
@@ -148,6 +158,8 @@ begin
       exact h_ih_hpq,
       exact h_ih_hp,
     exact k _,
+    exact t _,
+    exact s4 _,
     apply nec_weak s,
       cases h_cnil,
         apply nec,
@@ -156,7 +168,7 @@ begin
 end
 
 def subctx_contr {Γ Δ : ctx σ} {p : form σ}:
-   Δ ⊆ Γ → (Γ ⊔ Δ ⊢ₖ p) → (Γ ⊢ₖ p) :=
+   Δ ⊆ Γ ⇒ (Γ ⊔ Δ ⊢ₛ₄ p) ⇒ (Γ ⊢ₛ₄ p) :=
 begin
   intros s h,
   induction h,
@@ -170,6 +182,8 @@ begin
       exact h_ih_hpq,
       exact h_ih_hp,
     exact k _,
+    exact t _,
+    exact s4 _,
     apply nec_weak s,
       revert h_h, rewrite h_cnil,
       apply full_nec
@@ -178,37 +192,37 @@ end
 /- right-hand side basic rules of inference -/
 
 def pr {Γ : ctx σ} {p : form σ} :
-  Γ ⸴ p ⊢ₖ p :=
+  Γ ⸴ p ⊢ₛ₄ p :=
 by apply ax; apply or.intro_left; simp
 
 def pr1 {Γ : ctx σ} {p q : form σ} :
-  Γ ⸴ p ⸴ q ⊢ₖ p :=
+  Γ ⸴ p ⸴ q ⊢ₛ₄ p :=
 by apply ax; apply or.intro_right; apply or.intro_left; simp
 
 def pr2 {Γ : ctx σ} {p q : form σ} :
-  Γ ⸴ p ⸴ q ⊢ₖ q :=
+  Γ ⸴ p ⸴ q ⊢ₛ₄ q :=
 by apply ax; apply or.intro_left; simp
 
 def by_mp1 {Γ : ctx σ} {p q : form σ} :
-  Γ ⸴ p ⸴ p ⊃ q ⊢ₖ q :=
+  Γ ⸴ p ⸴ p ⊃ q ⊢ₛ₄ q :=
 mp pr2 pr1
 
 def by_mp2 {Γ : ctx σ} {p q : form σ} :
-  Γ ⸴ p ⊃ q ⸴ p ⊢ₖ q :=
+  Γ ⸴ p ⊃ q ⸴ p ⊢ₛ₄ q :=
 mp pr1 pr2
 
 def cut {Γ : ctx σ} {p q r : form σ} :
-  (Γ ⊢ₖ p ⊃ q) → (Γ ⊢ₖ q ⊃ r) → (Γ ⊢ₖ p ⊃ r) :=
+  (Γ ⊢ₛ₄ p ⊃ q) ⇒ (Γ ⊢ₛ₄ q ⊃ r) ⇒ (Γ ⊢ₛ₄ p ⊃ r) :=
 λ H1 H2, mp (mp (pl2 _) (mp (pl1 _) H2 )) H1
 
 def conv_deduction {Γ : ctx σ} {p q : form σ} :
-  (Γ ⊢ₖ p ⊃ q) → (Γ ⸴ p ⊢ₖ q) :=
+  (Γ ⊢ₛ₄ p ⊃ q) ⇒ (Γ ⸴ p ⊢ₛ₄ q) :=
 λ h, mp (weak h) pr 
 
 /- left-hand side basic rules of inference -/
 
 def mp_in_ctx_left {Γ : ctx σ} {p q r : form σ} :
-  (Γ ⸴ p ⸴ q ⊢ₖ r) → (Γ ⸴ p ⸴ p ⊃ q ⊢ₖ r) :=
+  (Γ ⸴ p ⸴ q ⊢ₛ₄ r) ⇒ (Γ ⸴ p ⸴ p ⊃ q ⊢ₛ₄ r) :=
 begin
   intro h,
   induction h,
@@ -229,11 +243,13 @@ begin
       exact h_ih_hpq,
       exact h_ih_hp,
     exact k _,
+    exact t _,
+    exact s4 _,
     apply false.rec, apply has_append_ctx_not_empty, assumption
 end
 
 def mp_in_ctx_right {Γ : ctx σ} {p q r : form σ} :
-  (Γ ⸴ p ⸴ p ⊃ q ⊢ₖ r) → (Γ ⸴ p ⸴ q ⊢ₖ r) :=
+  (Γ ⸴ p ⸴ p ⊃ q ⊢ₛ₄ r) ⇒ (Γ ⸴ p ⸴ q ⊢ₛ₄ r) :=
 begin
   intro h,
   induction h,
@@ -255,13 +271,15 @@ begin
       exact h_ih_hpq,
       exact h_ih_hp,
     exact k _,
+    exact t _,
+    exact s4 _,
     apply false.rec, apply has_append_ctx_not_empty, assumption
 end
 
 /- basic lemmas -/
 
 def contrap {Γ : ctx σ} {p q : form σ} :
-  Γ ⊢ₖ ((~q) ⊃ (~p)) ⊃ (p ⊃ q) :=
+  Γ ⊢ₛ₄ ((~q) ⊃ (~p)) ⊃ (p ⊃ q) :=
 deduction (deduction
   (mp (mp (pl3 _)
     begin
@@ -282,7 +300,7 @@ deduction (deduction
 )
 
 def not_impl {Γ : ctx σ} {p q : form σ} : 
-  Γ ⊢ₖ (p ⊃ q) ⊃ ((~q) ⊃ (~p)) :=
+  Γ ⊢ₛ₄ (p ⊃ q) ⊃ ((~q) ⊃ (~p)) :=
 begin
   repeat {apply deduction},
   apply mp,
@@ -295,20 +313,20 @@ begin
 end
 
 def dne {p : form σ} {Γ : ctx σ} :
-  Γ ⊢ₖ (~~p) ⊃ p :=
-have h : Γ ⊢ₖ (~~p) ⊃ ((~p) ⊃ (~p)) := mp (pl1 _) id,
+  Γ ⊢ₛ₄ (~~p) ⊃ p :=
+have h : Γ ⊢ₛ₄ (~~p) ⊃ ((~p) ⊃ (~p)) := mp (pl1 _) id,
 mp (mp (pl2 Γ) (cut (pl1 Γ) (pl3 Γ))) h
 
 def dni {p : form σ} {Γ : ctx σ} :
-  Γ ⊢ₖ p ⊃ (~~p) :=
+  Γ ⊢ₛ₄ p ⊃ (~~p) :=
 mp contrap dne 
 
 def lem {p : form σ} {Γ : ctx σ} :
-  Γ ⊢ₖ  p ∨ ~p :=
+  Γ ⊢ₛ₄  p ∨ ~p :=
 mp dni (mp contrap dne)
 
 def not_impl_to_and {p q : form σ} {Γ : ctx σ} :
-  Γ ⊢ₖ (~(p ⊃ q)) ⊃ (p & (~q)) :=
+  Γ ⊢ₛ₄ (~(p ⊃ q)) ⊃ (p & (~q)) :=
 begin
   repeat {apply deduction},
     apply (mp pr1),
@@ -318,7 +336,7 @@ begin
 end
 
 def and_not_to_not_impl {p q : form σ} {Γ : ctx σ} :
-  Γ ⊢ₖ (p & (~q)) ⊃ ~(p ⊃ q) :=
+  Γ ⊢ₛ₄ (p & (~q)) ⊃ ~(p ⊃ q) :=
 begin
   repeat {apply deduction},
     apply mp,
@@ -331,12 +349,12 @@ end
 /- notable introduction rules -/
 
 def negintro {p q : form σ} {Γ : ctx σ} :
-  (Γ ⊢ₖ p ⊃ q) → (Γ ⊢ₖ p ⊃ ~q) → (Γ ⊢ₖ ~p) :=
-have h : ∀ q, (Γ ⊢ₖ p ⊃ q) → (Γ ⊢ₖ (~~p) ⊃ q) := λ q h, cut dne h,
+  (Γ ⊢ₛ₄ p ⊃ q) ⇒ (Γ ⊢ₛ₄ p ⊃ ~q) ⇒ (Γ ⊢ₛ₄ ~p) :=
+have h : ∀ q, (Γ ⊢ₛ₄ p ⊃ q) ⇒ (Γ ⊢ₛ₄ (~~p) ⊃ q) := λ q h, cut dne h,
   λ hp hnp, mp (mp (pl3 _) (h (~q) hnp)) (h q hp)
 
 def ex_falso {Γ : ctx σ} {p : form σ} :
-  (Γ ⊢ₖ ⊥) → (Γ ⊢ₖ p) :=
+  (Γ ⊢ₛ₄ ⊥) ⇒ (Γ ⊢ₛ₄ p) :=
 begin
   intro h,
   apply mp,
@@ -347,7 +365,7 @@ begin
 end
 
 def ex_falso_and {Γ : ctx σ} {p q : form σ} :
-  Γ ⊢ₖ (~p) ⊃ (p ⊃ q) :=
+  Γ ⊢ₛ₄ (~p) ⊃ (p ⊃ q) :=
 begin
   repeat {apply deduction},
   apply ex_falso,
@@ -355,7 +373,7 @@ begin
 end
 
 def ex_falso_pos {Γ : ctx σ} {p q : form σ} :
-  Γ ⊢ₖ p ⊃ ((~p) ⊃ q) :=
+  Γ ⊢ₛ₄ p ⊃ ((~p) ⊃ q) :=
 begin
   repeat {apply deduction},
     apply mp, apply mp, apply ex_falso_and,
@@ -364,7 +382,7 @@ begin
 end
 
 def contr_conseq {Γ : ctx σ} {p r : form σ} :
-  Γ ⊢ₖ (p ⊃ r) ⊃ (((~p) ⊃ r) ⊃ r) :=
+  Γ ⊢ₛ₄ (p ⊃ r) ⊃ (((~p) ⊃ r) ⊃ r) :=
 begin
   repeat {apply deduction},
     apply mp, apply mp,
@@ -380,12 +398,12 @@ begin
         apply dne
 end
 
-def impl_weak {p q r : form σ} {Γ : ctx σ} (h : (Γ ⸴ r ⊢ₖ p) → (Γ ⊢ₖ p)) :
-  ((Γ ⊢ₖ p) → (Γ ⊢ₖ q)) → ((Γ ⸴ r ⊢ₖ p) → (Γ ⸴ r ⊢ₖ q)) :=
+def impl_weak {p q r : form σ} {Γ : ctx σ} (h : (Γ ⸴ r ⊢ₛ₄ p) ⇒ (Γ ⊢ₛ₄ p)) :
+  ((Γ ⊢ₛ₄ p) ⇒ (Γ ⊢ₛ₄ q)) ⇒ ((Γ ⸴ r ⊢ₛ₄ p) ⇒ (Γ ⸴ r ⊢ₛ₄ q)) :=
 λ hpq hp, weak (hpq (h hp))
 
 def and_intro {Γ : ctx σ} {p q : form σ} :
-  (Γ ⊢ₖ p) → (Γ ⊢ₖ q) → (Γ ⊢ₖ (p & q)) :=
+  (Γ ⊢ₛ₄ p) ⇒ (Γ ⊢ₛ₄ q) ⇒ (Γ ⊢ₛ₄ (p & q)) :=
 begin
   intros hp hq, apply deduction,
     apply mp,
@@ -396,7 +414,7 @@ end
 
 
 def and_elim_left {p q : form σ} {Γ : ctx σ} :
-  (Γ ⸴ (p & q) ⊢ₖ p) :=
+  (Γ ⸴ (p & q) ⊢ₛ₄ p) :=
 begin
   apply mp, apply dne,
     apply mp,
@@ -410,7 +428,7 @@ begin
 end
 
 def and_elim_right {p q : form σ} {Γ : ctx σ} :
-  (Γ ⸴ (p & q) ⊢ₖ q) :=
+  (Γ ⸴ (p & q) ⊢ₛ₄ q) :=
 begin
   apply mp, apply dne,
     apply mp,
@@ -429,7 +447,7 @@ begin
 end
 
 def or_intro_left {Γ : ctx σ} {p q r : form σ} :
-  (Γ ⊢ₖ p) → (Γ ⊢ₖ (p ∨ q)) :=
+  (Γ ⊢ₛ₄ p) ⇒ (Γ ⊢ₛ₄ (p ∨ q)) :=
 begin
   intros hp, simp,
   apply mp, apply dni,
@@ -442,7 +460,7 @@ begin
 end
 
 def or_intro_right {Γ : ctx σ} {p q r : form σ} :
-  (Γ ⊢ₖ q) → (Γ ⊢ₖ (p ∨ q)) :=
+  (Γ ⊢ₛ₄ q) ⇒ (Γ ⊢ₛ₄ (p ∨ q)) :=
 begin
   intros hp, simp,
   apply mp, apply dni,
@@ -452,7 +470,7 @@ begin
 end
 
 def or_elim {Γ : ctx σ} {p q r : form σ} :
-  (Γ ⊢ₖ (p ∨ q)) → (Γ ⊢ₖ p ⊃ r) → (Γ ⊢ₖ q ⊃ r) → (Γ ⊢ₖ r) :=
+  (Γ ⊢ₛ₄ (p ∨ q)) ⇒ (Γ ⊢ₛ₄ p ⊃ r) ⇒ (Γ ⊢ₛ₄ q ⊃ r) ⇒ (Γ ⊢ₛ₄ r) :=
 begin
   intros hpq hpr hqr,
   apply mp, apply mp,
@@ -469,7 +487,7 @@ begin
 end
 
 def detach_pos {Γ : ctx σ} {p q : form σ} :
-  (Γ ⸴ p ⊢ₖ q) → (Γ ⸴ ~p ⊢ₖ q) → (Γ ⊢ₖ q) :=
+  (Γ ⸴ p ⊢ₛ₄ q) ⇒ (Γ ⸴ ~p ⊢ₛ₄ q) ⇒ (Γ ⊢ₛ₄ q) :=
 begin
   intros hpq hnpq,
   apply or_elim, apply lem,
@@ -477,7 +495,7 @@ begin
 end
 
 def detach_neg {Γ : ctx σ} {p q : form σ} :
-  (Γ ⸴ ~p ⊢ₖ q) → (Γ ⸴ p ⊢ₖ q) → (Γ ⊢ₖ q) :=
+  (Γ ⸴ ~p ⊢ₛ₄ q) ⇒ (Γ ⸴ p ⊢ₛ₄ q) ⇒ (Γ ⊢ₛ₄ q) :=
 begin
   intros hpq hnpq,
   apply or_elim, apply lem,

@@ -4,11 +4,9 @@ Released under the Apache License 2.0 (see "License");
 Author: Bruno Bentzen
 -/
 
-import .semantics.lemmas .misc
+import .syntax.lemmas .semantics.lemmas .misc
 
 variable {σ : nat}
-
-open prf
 
 /- soundness -/
 

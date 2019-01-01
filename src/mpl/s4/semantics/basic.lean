@@ -15,7 +15,8 @@ variable {σ : nat}
 
 /- Kripke models -/
 
-structure model := (wrlds : set (wrld σ)) (access : wrld σ → wrld σ → bool) (val : var σ → wrld σ → bool)
+structure model :=  (wrlds : set (wrld σ)) (access : wrld σ → wrld σ → bool) (val : var σ → wrld σ → bool) 
+                    (refl : ∀ w, w ∈ wrlds → access w w = tt) (trans : ∀ w v u, w ∈ wrlds → v ∈ wrlds → u ∈ wrlds → access w v  = tt → access v u  = tt → access w u  = tt)
 
 notation `𝓦` `⸴` `𝓡` `⸴` `𝓿` := model
 
@@ -27,7 +28,7 @@ local attribute [instance] prop_decidable
 
 noncomputable def form_tt_in_wrld (M : 𝓦 ⸴ 𝓡 ⸴ 𝓿) : form σ → wrld σ → bool
 |  (#p)   := λ w, (𝓿 ▹ M) p w
-| (bot σ) := λ w, ff 
+| (bot _)     := λ w, ff 
 | (p ⊃ q) := λ w, (bnot (form_tt_in_wrld p w)) || (form_tt_in_wrld q w) 
 |  (◻p)   := λ w,
   if (∀ v, w ∈ (𝓦 ▹ M) → v ∈ (𝓦 ▹ M) → (𝓡 ▹ M) w v = tt → form_tt_in_wrld p v = tt) then tt else ff
@@ -39,7 +40,7 @@ notation M `⦃` p `⦄` w := form_tt_in_wrld M p w
 inductive stsf (M : 𝓦 ⸴ 𝓡 ⸴ 𝓿) (p : form σ) : Prop 
 | is_true (m : Π w, (M ⦃p⦄ w) = tt) : stsf
 
-notation M `⊨ₖ` p := stsf M p
+notation M `⊨ₛ₄` p := stsf M p
 
 /- Validity -/
 
@@ -51,6 +52,6 @@ assume w, if (∀ p, p ∈ Γ → form_tt_in_wrld M p w = tt) then tt else ff
 notation M `⦃`Γ`⦄` w := ctx_tt_in_wrld M Γ w
 
 inductive sem_csq (Γ : ctx σ) (p : form σ) : Prop
-| is_true (m : Π (M : 𝓦 ⸴ 𝓡 ⸴ 𝓿) (w : wrld σ), ((M ⦃Γ⦄ w) = tt) → (M ⦃p⦄ w) = tt) : sem_csq
+| is_true (m : Π (M : 𝓦 ⸴ 𝓡 ⸴ 𝓿) (w : wrld σ), (w ∈ 𝓦 ▹ M) → ((M ⦃Γ⦄ w) = tt) → (M ⦃p⦄ w) = tt) : sem_csq
 
-notation Γ `⊨ₖ` p := sem_csq Γ p
+notation Γ `⊨ₛ₄` p := sem_csq Γ p

@@ -11,11 +11,11 @@ import data.nat.basic
 open nat 
 
 lemma lt_mul_of_gt_one_left {n m: ℕ} (h₁ : n > 1) (h₂ : m > 0) : n * m > m :=
-have h : n * m > 1 * m := mul_lt_mul h₁ (le_refl m) h₂ (nat.le_trans (zero_le 2) h₁),
+have h : n * m > 1 * m := mul_lt_mul h₁ (le_refl m) h₂ (nat.le_trans (nat.zero_le 2) h₁),
 by simp at *; exact h
 
 lemma le_mul_of_ge_one_left'' {n m: ℕ} (h₁ : n ≥ 1) (h₂ : m ≥ 0) : n * m ≥ m :=
-have h : n * m ≥ 1 * m := mul_le_mul h₁ (le_refl m) h₂ (zero_le n),
+have h : n * m ≥ 1 * m := mul_le_mul h₁ (le_refl m) h₂ (nat.zero_le n),
 by simp at *; exact h
 
 def le_add_le_of_le_add {m n j k : ℕ} (hm : n ≤ m) (hk : j ≤ k) : n + j ≤ m + k := 

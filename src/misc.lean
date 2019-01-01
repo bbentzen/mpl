@@ -15,9 +15,8 @@ iff.intro (λ f nq p, nq (f p))
 
 def not_contrap {p q : Prop} : 
   (¬ q → ¬ p) → (p → q) :=
---not_imp_not.1
 contrap.2
 
---variables p q : Prop
-
---#check @not_imp_not q p classical.
+def pos_contrap {p q : Prop} : 
+  (p → q) → ((¬ q) → ¬ p) :=
+contrap.1

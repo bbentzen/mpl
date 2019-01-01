@@ -4,7 +4,7 @@ Released under the Apache License 2.0 (see "License");
 Author: Bruno Bentzen
 -/
 
-import .basic .context.lemmas
+import .basic 
 
 variable {σ : nat}
 
@@ -535,24 +535,4 @@ begin
     apply deduction, assumption
 end
 
-
 end prf
-
-def cases_ctx {Γ : ctx σ} {p : form σ} (hp : Γ ⊢ₚ p) :
-  Γ = ∅ ∨ (∃ Δ q, Γ = (Δ ⸴ q) ∧ (Δ ⊢ₚ p)) :=
-begin
-  cases (classical.prop_decidable (Γ = ∅)),
-    right, cases nonempty_ctx_has_mem h,
-      fapply exists.intro, exact Γ,
-      fapply exists.intro, exact w,
-        split, 
-          apply ctx_ext, intro p,
-            apply iff.intro,
-              intro pm,
-                cases (classical.prop_decidable (p = w)),
-                  right, repeat {assumption},
-                  left, assumption,
-            intro pm, cases pm,
-              cases pm, repeat {assumption},
-    left, assumption
-end

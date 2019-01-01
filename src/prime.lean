@@ -6,7 +6,7 @@ Author: Bruno Bentzen
 
 -- factorization of prime numbers
 
-import .nat data.nat.prime data.list.basic
+import .nat data.nat.prime data.list.basic tactic.norm_num
 
 open nat list decidable 
 
@@ -54,8 +54,8 @@ lemma prime_exp_min_fac_is_self {n m : ℕ} (p_n : prime n) :
   min_fac (n^(m+1)) = n :=
 have h : n^1 ∣ n^(m+1) := pow_dvd_pow n (succ_le_succ (nat.zero_le m)),
 begin
-  rw nat.pow_one n at *, cases eq_or_lt_of_le 
-    (min_fac_le_of_dvd (n^(m+1)) n (and.elim_left (prime_def_min_fac.1 p_n)) h),
+  rw nat.pow_one n at *, cases nat.eq_or_lt_of_le 
+    (min_fac_le_of_dvd (and.elim_left (prime_def_min_fac.1 p_n)) h),
       assumption,
       apply absurd h_1, apply prime_exp_min_fac_not_lt p_n
 end
@@ -80,11 +80,11 @@ by calc
 
 /-- fundamental facts about prime numbers --/
 
-lemma prime_five : prime 5 := sorry --why dec_trivial is not working?
+lemma prime_five : prime 5 := by norm_num --why dec_trivial is not working?
 
-lemma prime_seven : prime 7 := sorry
+lemma prime_seven : prime (7 : ℕ) := by norm_num --by unfold prime --unfold prime; unfold nat.div--;
 
-lemma prime_eleven : prime 11 := sorry
+lemma prime_eleven : prime 11 := by norm_num
 
 lemma prime_dvd_exp {n : ℕ} (p_n : prime n) (m > 0) : 
   n ∣ n^m :=
@@ -121,7 +121,7 @@ begin
                 apply nat.le_trans, 
                   apply le_succ,
                   exact prime.ge_two p_m,
-                apply le_add_left
+                apply nat.le_add_left
 end
 
 /-- more about least prime factors and factorization --/
@@ -147,10 +147,10 @@ end
 
 lemma prime_exp_mul_min_fac_is_least_prime {n m i : ℕ} (hn : n < m) (p_n : prime n) (p_m : prime m) (h : i > 0) (j > 0) : 
   min_fac (n^i*m^j) = n :=
-have hmin : min_fac (n^i*m^j) ≤ n := min_fac_le_of_dvd _ _ (prime.ge_two p_n) (prime_dvd_exp_left p_n _ h) , 
+have hmin : min_fac (n^i*m^j) ≤ n := min_fac_le_of_dvd (prime.ge_two p_n) (prime_dvd_exp_left p_n _ h) , 
 match prime_exp_mul_min_fac p_n p_m h H with
   | or.inl h := h
-  | or.inr h := or.elim (eq_or_lt_of_le hmin) id
+  | or.inr h := or.elim (nat.eq_or_lt_of_le hmin) id
       (by rw h; intro; apply absurd hn; apply nat.lt_asymm a)
 end
 

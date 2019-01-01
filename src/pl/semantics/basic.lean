@@ -6,11 +6,13 @@ Author: Bruno Bentzen
 
 import ..default
 
+open form
+
 variable {σ : nat}
 
 def form_tt_in_val (v : var σ → bool) : form σ → bool
-|  (#p)  := v p
-|   ⊥    := ff
+|  (#p)   := v p
+| (bot σ) := ff
 | (p ⊃ q) := (bnot (form_tt_in_val p)) || (form_tt_in_val q) 
 
 /- Satisfiability -/
@@ -30,11 +32,3 @@ inductive sem_csq (Γ : ctx σ) (p : form σ) : Prop
 | is_true (m : Π (v : var σ → bool), ((⦃Γ⦄ v) = tt) → (⦃p⦄ v) = tt) : sem_csq
 
 notation Γ `⊨ₚ` p := sem_csq Γ p
-
---| ·      := tt
---| (Γ ⸴ p) := ctx_tt_in_val Γ && ⦃p⦄v
-/-def dec_ctx (v : var σ → bool) (Γ : ctx σ) :
-  decidable (∀ p, p ∈ Γ → (form_tt_in_val v p) = tt) :=
-begin
-  
-end-/

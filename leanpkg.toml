@@ -1,0 +1,8 @@
+[package]
+name = "metalogic"
+version = "0.1"
+lean_version = "3.4.1"
+path = "src"
+
+[dependencies]
+mathlib = {git = "https://github.com/leanprover/mathlib", rev = "019b2364cadb1dd8b30c9f13c602d61c19d3b6ea"}

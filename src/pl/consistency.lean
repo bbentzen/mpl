@@ -241,8 +241,7 @@ begin
   intro h, cases (sndnss h),
     apply bot_is_insatisf, 
       apply exists.intro, apply m,
-        unfold ctx_tt_in_val, simp, intros, apply false.rec, exact a,
-        exact (λ v, ff)
+        unfold ctx_tt_in_val, simp, intros, exact ff
 end
 
 def pos_literal_is_consist {v : var σ} : @is_consist σ {#v} :=
@@ -250,9 +249,7 @@ begin
   intro h, cases (sndnss h),
   apply bot_is_insatisf, 
     apply exists.intro, apply m (λ v, tt),
-        unfold ctx_tt_in_val, simp, intros vv hv,
-        cases hv, cases (hv),
-          unfold form_tt_in_val, apply false.rec, assumption
+        unfold ctx_tt_in_val, simp, unfold form_tt_in_val
 end
 
 def neg_literal_is_consist {v : var σ} : @is_consist σ {~#v} :=
@@ -260,9 +257,7 @@ begin
   intro h, cases (sndnss h),
   apply bot_is_insatisf, 
     apply exists.intro, apply m (λ v, ff),
-        unfold ctx_tt_in_val, simp, intros vv hv,
-        cases hv, cases (hv),
-          unfold form_tt_in_val, simp, apply false.rec, assumption
+        unfold ctx_tt_in_val, simp, unfold form_tt_in_val, simp
 end
 
 def bot_is_inconsist : ¬(@is_consist σ {⊥}) :=

@@ -4,7 +4,16 @@ Released under the Apache License 2.0 (see "License");
 Author: Bruno Bentzen
 -/
 
-import .basic ..language.basic ..language.lemmas
+import .language
+
+/- context -/ 
+
+@[reducible]
+def ctx (σ : nat) : Type := set (form σ)
+
+notation `·` := {}
+notation Γ `⸴` p := set.insert p Γ
+notation Γ `⊔` Δ := set.union Γ Δ
 
 variable {σ : nat}
 
@@ -119,13 +128,17 @@ begin
       apply hd, assumption
 end
 
+def empty_sub_every_ctx {Γ : ctx σ} :
+  · ⊆ Γ :=
+by intros p pm; apply false.rec; assumption
+
 /- context equality -/
 
 def ctx_ext {Γ Δ : ctx σ} (h : ∀ p, p ∈ Γ ↔ p ∈ Δ) : Γ = Δ :=
 funext (assume x, propext (h x))
 
 def empty_ctx_eq {Γ : ctx σ} :
-  (∀ p : form σ, p ∉ Γ) → Γ = ∅ :=
+  (∀ p : form σ, p ∉ Γ) → Γ = · :=
 begin
   intro h, apply ctx_ext,
     intro p, apply iff.intro,
@@ -133,21 +146,33 @@ begin
       intro pm, apply false.rec, assumption
 end
 
-def nonempty_ctx_has_mem {Γ : ctx σ} :
-  Γ ≠ ∅ → ∃ p, p ∈ Γ :=
-begin
+def has_mem_iff_nonempty_ctx {Γ : ctx σ} :
+  (∃ p, p ∈ Γ) ↔ Γ ≠ · :=
+begin 
+  apply iff.intro,
+    intros h heq,
+      cases h,
+        revert h_h, rewrite heq, apply id,
   cases (classical.prop_decidable (∀ p , p ∉ Γ)),
     intro, apply classical.by_contradiction,
       intro, apply h, apply forall_not_of_not_exists, assumption,
     intro neq, apply false.rec, apply neq, 
-      apply empty_ctx_eq, assumption
+      apply empty_ctx_eq, assumption  
+end
+
+def has_append_ctx_not_empty {Γ : ctx σ} {p : form σ} :
+  (Γ ⸴ p) ≠ · :=
+begin
+  intro h,
+    have emem : p ∈ ∅ := by rewrite (eq.symm h); apply trivial_mem_left,
+  assumption
 end
 
 def ctx_eq (Γ : ctx σ) :
-  Γ = ∅ ∨ (∃ Δ p, Γ = (Δ ⸴ p)) :=
+  Γ = · ∨ (∃ Δ p, Γ = (Δ ⸴ p)) :=
 begin
   cases (classical.prop_decidable (Γ = ∅)),
-    right, cases nonempty_ctx_has_mem h,
+    right, cases has_mem_iff_nonempty_ctx.2 h,
       fapply exists.intro, exact (set.sep (λ p, p ≠ w) Γ),
       fapply exists.intro, exact w,
         apply ctx_ext,
@@ -160,33 +185,3 @@ begin
               repeat {cases pm, assumption},
     left, assumption
 end
-
-/-
-def ctx_eq2 (Γ : ctx σ) :
-  Γ = ∅ ∨ (∃ p, Γ = (Γ ⸴ p)) :=
-begin
-  cases (classical.prop_decidable (Γ = ∅)),
-    right, cases nonempty_ctx_has_mem h,
---      fapply exists.intro, exact Γ,
-      fapply exists.intro, exact w,
-        apply ctx_ext,
-          intro p, apply iff.intro,
-            intro pm,
-                cases (classical.prop_decidable (p = w)),
-                  right, repeat {assumption},
-                  left, assumption,
-            intro pm, cases pm,
-              repeat {cases pm, assumption}, assumption,
-    left, assumption
-end
-
-#check @list.rec_on
-
-def ctx_rec : Π {C : ctx σ → Sort} (Γ : ctx σ),
-    C ∅ → (Π (p : form σ) (Δ : ctx σ), C Δ → C (Δ ⸴ p)) → C Γ :=
-begin
-  intros C Γ ce cf,
-    cases ctx_eq2 Γ,
-      cases h, assumption,
-      cases h, rewrite h_h,
-end-/

@@ -4,7 +4,7 @@ Released under the Apache License 2.0 (see "License");
 Author: Bruno Bentzen
 -/
 
-import .consistency .encodable .misc
+import .consistency .encoding .misc
 
 open nat set classical
 
@@ -20,7 +20,6 @@ def ext_ctx_to_max_set_at (Γ : ctx σ) : nat → ctx σ
 | 0     := ext_ctx_with_form Γ 0
 | (n+1) := ext_ctx_with_form (ext_ctx_to_max_set_at n) (n+1)
 
---@[reducible]
 def ext_ctx_to_max_set (Γ : ctx σ) : ctx σ := 
 ⋃₀ (image (λ n, ext_ctx_to_max_set_at Γ n) {n | true})
 
