@@ -4,13 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jeremy Avigad
 -/
 
-import ..encodable2 .language 
-
--- A more concise encoding of form -- Thanks Jeremy!
+import .encodable .language 
 
 namespace form
 
-private def constructors (σ : nat) := (var σ) ⊕ unit ⊕ unit ⊕ unit
+private def constructors (σ : nat) := (fin σ) ⊕ unit ⊕ unit ⊕ unit
 
 local notation `catom` v := sum.inl v
 local notation `cbot`    := sum.inr (sum.inl unit.star)
@@ -38,7 +36,7 @@ private def finv : Wfin (arity σ) → form σ
 | ⟨cimpl, fn⟩   := impl (finv (fn ⟨0, dec_trivial⟩)) (finv (fn ⟨1, dec_trivial⟩))       
 | ⟨cbox, fn⟩    := box  (finv (fn ⟨0, dec_trivial⟩))        
 
-instance [encodable (var σ)] : encodable (form σ) :=
+instance [encodable (fin σ)] : encodable (form σ) :=
 begin
   haveI : encodable (constructors σ) :=
     by { unfold constructors, apply_instance },
