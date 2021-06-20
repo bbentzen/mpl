@@ -1,8 +1,9 @@
 [package]
-name = "metalogic"
+name = "mpl"
 version = "0.1"
-lean_version = "3.4.1"
+lean_version = "3.4.2"
 path = "src"
+timeout = 100
 
 [dependencies]
-mathlib = {git = "https://github.com/leanprover/mathlib", rev = "019b2364cadb1dd8b30c9f13c602d61c19d3b6ea"}
+mathlib = {git = "https://github.com/leanprover/mathlib", rev = "8e4542dafe1f170b9b48d2293ad71e80a18dac87"}
