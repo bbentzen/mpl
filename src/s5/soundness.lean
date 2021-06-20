@@ -4,7 +4,7 @@ Released under the Apache License 2.0 (see "License");
 Author: Bruno Bentzen
 -/
 
-import .syntax.lemmas .semantics.lemmas 
+import .syntax.lemmas .semantics.lemmas
 
 variable {σ : nat}
 

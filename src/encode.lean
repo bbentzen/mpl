@@ -1,10 +1,10 @@
 /-
 Copyright (c) 2018 Jeremy Avigad. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Jeremy Avigad
+Author: Jeremy Avigad
 -/
 
-import .encodable .language 
+import .encodable .language
 
 namespace form
 
@@ -24,17 +24,17 @@ private def arity (σ : nat) : constructors σ → nat
 
 variable {σ : nat}
 
-private def f : form σ → Wfin (arity σ) 
+private def f : form σ → Wfin (arity σ)
 | (atom v)   := ⟨catom v, fin.mk_fn0⟩
 | (bot _)    := ⟨cbot, fin.mk_fn0⟩
-| (impl p q) := ⟨cimpl, fin.mk_fn2 (f p) (f q)⟩       
+| (impl p q) := ⟨cimpl, fin.mk_fn2 (f p) (f q)⟩
 | (box  p)   := ⟨cbox, fin.mk_fn1 (f p)⟩
 
 private def finv : Wfin (arity σ) → form σ
 | ⟨catom a, fn⟩ := atom a 
 | ⟨cbot, fn⟩    := bot _
-| ⟨cimpl, fn⟩   := impl (finv (fn ⟨0, dec_trivial⟩)) (finv (fn ⟨1, dec_trivial⟩))       
-| ⟨cbox, fn⟩    := box  (finv (fn ⟨0, dec_trivial⟩))        
+| ⟨cimpl, fn⟩   := impl (finv (fn ⟨0, dec_trivial⟩)) (finv (fn ⟨1, dec_trivial⟩))
+| ⟨cbox, fn⟩    := box (finv (fn ⟨0, dec_trivial⟩))
 
 instance [encodable (fin σ)] : encodable (form σ) :=
 begin

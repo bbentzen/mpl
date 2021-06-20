@@ -11,7 +11,7 @@ variable σ : nat
 inductive form : Type
 | atom : fin σ → form
 | bot : form
-| impl : form → form → form 
+| impl : form → form → form
 | box : form → form
 
 prefix `#` := form.atom

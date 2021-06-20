@@ -1,14 +1,14 @@
 /-
 Copyright (c) 2018 Jeremy Avigad. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Jeremy Avigad
+Author: Jeremy Avigad
 -/
 
 import data.equiv.encodable data.equiv.list data.fin data.finset data.fintype
 
 /-
-`Wfin α ar` is the type of finitely branching trees with labels from α, where 
-a node labeled `a` has `ar a` children. 
+`Wfin α ar` is the type of finitely branching trees with labels from α, where
+a node labeled `a` has `ar a` children.
 -/
 
 inductive Wfin {α : Type*} (ar : α → ℕ)
@@ -31,7 +31,7 @@ nat.lt_succ_of_le (finset.le_sup (finset.mem_univ i))
 end Wfin
 
 /-
-Show  `Wfin` types are encodable.
+Show `Wfin` types are encodable.
 -/
 
 namespace encodable

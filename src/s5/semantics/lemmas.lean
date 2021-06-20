@@ -266,7 +266,7 @@ lemma cons_ctx_tt_to_ctx_tt {Γ : ctx σ} {M : model} {w : wrld σ} {p : form σ
 by intro h; apply and.elim_left; apply cons_ctx_tt_iff_and.1 h
 
 lemma ctx_tt_cons_tt_to_cons_ctx_tt {Γ : ctx σ} {M : model} {w : wrld σ} {p : form σ} : 
-  (w ⊩⦃M⦄ Γ) = tt → (w ⊩⦃M⦄ p)  → (w ⊩⦃M⦄ (Γ ⸴ p)) :=
+  (w ⊩⦃M⦄ Γ) = tt → (w ⊩⦃M⦄ p) → (w ⊩⦃M⦄ (Γ ⸴ p)) :=
 by intros hg hp; apply cons_ctx_tt_iff_and.2; split; assumption; assumption
 
 /- sub-contexts -/

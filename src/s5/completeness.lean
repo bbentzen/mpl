@@ -37,7 +37,7 @@ def max (Γ : ctx σ) : ctx σ :=
 
 /- maximal extensions are extensions -/
 
-lemma subset_insert_code {Γ : ctx σ} (n) : 
+lemma subset_insert_code {Γ : ctx σ} (n) :
   Γ ⊆ insert_code Γ n :=
 begin
   intros v hv,
@@ -47,12 +47,12 @@ begin
   { split_ifs; exact set.mem_insert_of_mem _ hv },
 end
 
-lemma subset_maxn {Γ : ctx σ} : 
+lemma subset_maxn {Γ : ctx σ} :
   ∀ n, Γ ⊆ maxn Γ n
 | 0        := by refl
 | (succ n) := subset.trans (subset_maxn n) (subset_insert_code _)
 
-lemma maxn_subset_max {Γ : ctx σ} (n) : 
+lemma maxn_subset_max {Γ : ctx σ} (n) :
   maxn Γ n ⊆ max Γ :=
 subset_Union _ _
 
@@ -70,7 +70,7 @@ by induction h; [refl, exact subset.trans h_ih (subset_insert_code _)]
 
 /- maximal extensions are maximal -/
 
-lemma insert_form_self {Γ : ctx σ} {p : form σ} : 
+lemma insert_form_self {Γ : ctx σ} {p : form σ} :
   p ∈ insert_form Γ p ∨ (~p) ∈ insert_form Γ p :=
 begin
   unfold insert_form, split_ifs,
@@ -78,7 +78,7 @@ begin
   { exact or.inr (mem_insert _ _) },
 end
 
-lemma insert_code_self {Γ : ctx σ} (p : form σ) : 
+lemma insert_code_self {Γ : ctx σ} (p : form σ) :
   p ∈ insert_code Γ (encodable.encode p) ∨ (~p) ∈ insert_code Γ (encodable.encode p) :=
 begin
   unfold insert_code,
@@ -86,7 +86,7 @@ begin
   apply insert_form_self,
 end
 
-lemma mem_or_mem_max {Γ : ctx σ} (p : form σ) : 
+lemma mem_or_mem_max {Γ : ctx σ} (p : form σ) :
   p ∈ max Γ ∨ (~p) ∈ max Γ :=
 begin
   have := maxn_subset_max (encodable.encode p + 1),
@@ -95,7 +95,7 @@ end
 
 /- maximal extensions preserves consistency -/
 
-lemma is_consist_insert_form {Γ : ctx σ} {p : form σ} 
+lemma is_consist_insert_form {Γ : ctx σ} {p : form σ}
   (H : is_consist Γ) : is_consist (insert_form Γ p) :=
 begin
   rw insert_form, split_ifs,
@@ -126,8 +126,8 @@ begin
   generalize eq : max Γ = Γ',
   intro h, induction h; subst eq,
     { cases in_ext_ctx_max_set_is_in_ext_ctx_at h_h,
-      constructor, 
-      apply prf.ax, 
+      constructor,
+      apply prf.ax,
       assumption },
 
     repeat {
@@ -136,14 +136,14 @@ begin
       exact 0
     },
     
-    { cases h_ih_hpq rfl with n0 h_ext_pq, 
+    { cases h_ih_hpq rfl with n0 h_ext_pq,
       cases h_ih_hp rfl with n1 h_ext_p,
         cases (prop_decidable (n0 ≤ n1)),
             have hh: n1 ≤ n0 :=
               begin
-                cases nat.le_total, 
-                assumption, 
-                contradiction 
+                cases nat.le_total,
+                assumption,
+                contradiction
             end,
           constructor,
             apply prf.mp,
@@ -367,7 +367,7 @@ begin
         { refine ctx.mem_max_of_prf wm _, 
           exact (prf.mp prf.pl1 (prf.ax ((hq _ wm).1 h))) },
         { refine ctx.mem_max_of_prf wm _, 
-          apply prf.mp prf.contrap (prf.mp prf.pl1 (prf.ax h₂)) } },  
+          apply prf.mp prf.contrap (prf.mp prf.pl1 (prf.ax h₂)) } },
       { cases mem_domain_max wm q with h₁ h₂,
         { refine ctx.mem_max_of_prf wm _,
           exact prf.mp prf.pl1 (prf.ax h₁) },

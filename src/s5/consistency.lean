@@ -4,7 +4,7 @@ Released under the Apache License 2.0 (see "License");
 Author: Bruno Bentzen
 -/
 
-import .soundness 
+import .soundness
 
 open prf classical
 
@@ -44,12 +44,12 @@ end
 
 lemma consist_fst {Γ : ctx σ} {p : form σ} :
   is_consist (Γ ⸴ p) → is_consist Γ :=
-λ hc hn,  hc (weak hn)
+λ hc hn, hc (weak hn)
 
 /- consistent context extensions -/
 
 lemma consist_ext {Γ : ctx σ} {p : form σ} :
-  is_consist Γ  → (Γ ⊬ₛ₅ ~p) → is_consist (Γ ⸴ p) :=
+  is_consist Γ → (Γ ⊬ₛ₅ ~p) → is_consist (Γ ⸴ p) :=
 by intros c np hn; apply np (deduction hn)
 
 lemma inconsist_ext_to_inconsist {Γ : ctx σ} {p : form σ} :
@@ -100,11 +100,11 @@ end
 /- context extensions of subcontexts -/
 
 lemma sub_preserves_consist {Γ Δ : ctx σ} :
-  is_consist Γ  → is_consist Δ → Δ ⊆ Γ → is_consist (Γ ⊔ Δ) :=
+  is_consist Γ → is_consist Δ → Δ ⊆ Γ → is_consist (Γ ⊔ Δ) :=
 by intros c1 c2 s nc; apply c1; exact (subctx_contr s nc)
 
 lemma subctx_inherits_consist {Γ Δ : ctx σ} {p : form σ} :
-  is_consist Γ  → is_consist Δ → Γ ⊆ Δ → is_consist (Δ ⸴ p) → is_consist (Γ ⸴ p) :=
+  is_consist Γ → is_consist Δ → Γ ⊆ Δ → is_consist (Δ ⸴ p) → is_consist (Γ ⸴ p) :=
 by intros c1 c2 s c nc; apply c; apply conv_deduction; apply subctx_ax s (deduction nc)
 
 lemma inconsist_sub {Γ Δ : ctx σ} {p : form σ} (c : is_consist Γ) :

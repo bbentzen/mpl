@@ -6,7 +6,7 @@ Author: Bruno Bentzen
 
 import .language
 
-/- context -/ 
+/- context -/
 
 @[reducible]
 def ctx (σ : nat) : Type := set (form σ)

@@ -16,8 +16,8 @@ variable {σ : nat}
 
 structure model := (wrlds : set (wrld σ)) (access : wrld σ → wrld σ → bool) (val : fin σ → wrld σ → bool)
                    (refl : ∀ w ∈ wrlds, access w w = tt)
-                   (symm : ∀ w ∈ wrlds, ∀ v ∈ wrlds, access w v  = tt → access v w  = tt)
-                   (trans : ∀ w ∈ wrlds, ∀ v ∈ wrlds, ∀ u ∈ wrlds, access w v  = tt → access v u  = tt → access w u  = tt)
+                   (symm : ∀ w ∈ wrlds, ∀ v ∈ wrlds, access w v = tt → access v w = tt)
+                   (trans : ∀ w ∈ wrlds, ∀ v ∈ wrlds, ∀ u ∈ wrlds, access w v = tt → access v u = tt → access w u = tt)
 
 local attribute [instance] prop_decidable
 

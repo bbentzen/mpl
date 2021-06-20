@@ -28,7 +28,7 @@ begin
   induction h; subst eq,
   { repeat {cases h_h},
     exact id,
-    { exact mp pl1  (ax h_h) } },
+    { exact mp pl1 (ax h_h) } },
   { exact mp pl1 pl1 },
   { exact mp pl1 pl2 },
   { exact mp pl1 pl3 },
@@ -119,7 +119,7 @@ begin
       { cases set.eq_or_mem_of_mem_insert h with h' h',
         { rw h', apply set.mem_insert _ _ },
         { apply set.mem_insert_of_mem _ _,
-          apply set.mem_insert_of_mem _ _, 
+          apply set.mem_insert_of_mem _ _,
           exact h' } } },
   { exact pl1 },
   { exact pl2 },
@@ -243,13 +243,13 @@ begin
   generalize eq : (Γ ⸴ p ⸴ p ⊃ q) = Γ',
   intros h,
   induction h; subst eq,
-  { cases h_h, 
+  { cases h_h,
     { subst h_h,
       exact mp pl1 pr },
     { cases h_h,
-      { subst h_h, 
+      { subst h_h,
         exact pr1 },
-      { exact weak (weak (ax h_h)) } } },    
+      { exact weak (weak (ax h_h)) } } },
     { exact pl1 },
     { exact pl2 },
     { exact pl3 },
@@ -290,10 +290,10 @@ mp (mp pl2 (cut pl1 pl3)) h
 
 lemma dni {p : form σ} {Γ : ctx σ} :
   Γ ⊢ₛ₅ p ⊃ (~~p) :=
-mp contrap dne 
+mp contrap dne
 
 lemma lem {p : form σ} {Γ : ctx σ} :
-  Γ ⊢ₛ₅  p ∨ ~p :=
+  Γ ⊢ₛ₅ p ∨ ~p :=
 mp dni (mp contrap dne)
 
 lemma not_impl_to_and {p q : form σ} {Γ : ctx σ} :
@@ -357,7 +357,7 @@ lemma contrap_b {p : form σ} :
  · ⊢ₛ₅ (◇◻p) ⊃ p :=
 begin
   apply prf.cut,
-  show (· ⊢ₛ₅ (◇◻p) ⊃ (~◻~◻~~p)), 
+  show (· ⊢ₛ₅ (◇◻p) ⊃ (~◻~◻~~p)),
     from @prf.mp _ _ (◻(◻p ⊃ ◻(~~p))) _ diamond_k (prf.nec box_dni),
   apply prf.cut,
   show (· ⊢ₛ₅ (~◻~◻~~p) ⊃ ~~p),

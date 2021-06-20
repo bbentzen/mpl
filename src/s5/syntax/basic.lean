@@ -14,7 +14,7 @@ inductive prf : ctx σ → form σ → Prop
 | ax {Γ} {p} (h : p ∈ Γ) : prf Γ p
 | pl1 {Γ} {p q} : prf Γ (p ⊃ (q ⊃ p))
 | pl2 {Γ} {p q r} : prf Γ ((p ⊃ (q ⊃ r)) ⊃ ((p ⊃ q) ⊃ (p ⊃ r)))
-| pl3 {Γ} {p q} :  prf Γ (((~p) ⊃ ~q) ⊃ (((~p) ⊃ q) ⊃ p))
+| pl3 {Γ} {p q} : prf Γ (((~p) ⊃ ~q) ⊃ (((~p) ⊃ q) ⊃ p))
 | mp {Γ} {p q} (hpq: prf Γ (p ⊃ q)) (hp : prf Γ p) : prf Γ q
 | k {Γ} {p q} : prf Γ (◻(p ⊃ q) ⊃ (◻p ⊃ ◻q))
 | t {Γ} {p} : prf Γ (◻p ⊃ p) 
